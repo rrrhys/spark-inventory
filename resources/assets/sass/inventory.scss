@@ -1,0 +1,19 @@
+.btn-left {
+  text-align: left;
+}
+
+.dropdown-menu > li >a.bg-danger:hover {
+  @extend .bg-danger;
+}
+
+.overlay-alert {
+  position:absolute;
+  top:80px;
+  left: 40px;
+  right: 40px;
+  z-index:2;
+}
+
+.btn-clear-selected-item {
+  cursor: pointer;
+}
