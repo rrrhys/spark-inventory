@@ -4,6 +4,7 @@
         <!-- Main Content -->
 <div class="container spark-screen">
 
+    <div class="crumb"><small><a href="/home">Back to dashboard</a></small></div>
     <div class="row">
         <div class="col-md-12">
             <div class="panel panel-default" id="list-items">

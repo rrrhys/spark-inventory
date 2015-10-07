@@ -118,13 +118,24 @@
 								<div class="panel panel-info">
 									<div class="panel-heading">Feed</div>
 									<div class="panel-body">
-										<table class="table table-striped">
-											<tr v-repeat="feed">
-												<td>@{{ quantity }}</td>
-												<td>@{{ item_name }}</td>
-												<td>@{{ created_at_human }}</td>
-											</tr>
-										</table>
+
+
+                                        <table class="table">
+                                            <tr>
+                                                <th>When</th>
+                                                <th>Quantity</th>
+                                                <th>Notes</th>
+                                            </tr>
+                                            <tr v-repeat="feed">
+                                                <td title="@{{ created_at }}">@{{human_created_at}}</td>
+                                                <td>@{{ quantity }}</td>
+                                                <td>@{{ description }}</td>
+                                            </tr>
+                                            <tr v-if="feed.length == 0">
+                                                <td colspan="42">No recent movements</td>
+                                            </tr>
+                                        </table>
+
 									</div>
 								</div>
 							</div>

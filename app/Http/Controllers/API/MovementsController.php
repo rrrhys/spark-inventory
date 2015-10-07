@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Item;
 use Auth;
 use App\Movement;
 use Illuminate\Http\Request;
@@ -54,10 +55,13 @@ class MovementsController extends Controller
 
         $user = Auth::User();
         $movement = new Movement($request->all());
+        $movement->user_id = $user->id;
         $item = $user->items()->whereId($item_id)->firstOrFail();
 
         // saving the movement will modify the item.
         $item->movements()->save($movement);
+
+        $movement->touch();
 
 
         

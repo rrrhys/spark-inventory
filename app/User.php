@@ -68,4 +68,7 @@ class User extends Model implements AuthorizableContract,
     public function items(){
         return $this->hasMany('App\Item');
     }
+    public function movements(){
+        return $this->hasMany('App\Movement');
+    }
 }

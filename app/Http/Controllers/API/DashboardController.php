@@ -23,6 +23,7 @@ class DashboardController extends Controller
         $user = Auth::User();
         $responseData = [];
         $responseData['itemsBelowMinimum'] = $user->items()->belowMinimum()->get();
+        $responseData['feed'] = $user->movements()->recent()->get();
 
         return response()->json([
             'result'=>'success',

@@ -54,6 +54,9 @@ $("#item_movement").length > 0 ? new Vue({
         saveNewMovement: function(e){
             this.saving = true;
             e.preventDefault();
+            var toSend = this.new_movement;
+            this.new_movement.quantity *= this.direction;
+            debugger;
             this.$http.post("/api/v1/items/" + this.item_id + "/movements/", this.new_movement, function(response){
                 this.saving = false;
                 this.movements.push(response.movement);
