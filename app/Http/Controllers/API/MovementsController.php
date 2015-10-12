@@ -60,7 +60,7 @@ class MovementsController extends Controller
         $item->movements()->save($movement);
 
 
-        
+
 
         return response()->json([
             'result'=>'success',
