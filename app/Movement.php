@@ -1,7 +1,7 @@
 <?php
 
 namespace App;
-
+use App\Item;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -20,11 +20,20 @@ class Movement extends Model
 
         return $date->toRfc1123String();
     }
+
     public function getHumanCreatedAtAttribute($date)
     {
         $date = new \Carbon\Carbon($this->created_at);
         // Now modify and return the date
 
         return $date->diffForHumans();
+    }
+
+    public function item(){
+        return $this->belongsTo('App\Item');
+    }
+
+    public function scopeRecent($query){
+        return $query->orderBy('id','desc')->take(100);
     }
 }

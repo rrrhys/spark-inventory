@@ -1,43 +1,16 @@
 @extends('spark::layouts.app')
 
 @section('content')
-    <div class="container spark-screen" id="item_movement">
+    <div class="container spark-screen" id="item_show">
         <input type="hidden" name="item_id" v-model="item_id" value="{{$item_id}}">
-        <input type="hidden" name="movement_direction" v-model="direction" value="{{$direction == "in" ? 1 : -1}}">
 
         <div class="crumb"><small><a href="/home">Back to dashboard</a></small></div>
 
         <div class="row">
             <div class="col-sm-8 col-sm-offset-2">
                 <div class="panel panel-default">
-                    <div class="panel-heading" v-show="item">New movement {{$direction}} for @{{ item.item_name }}</div>
+                    <div class="panel-heading" v-show="item">Information for @{{ item.item_name }}</div>
                     <div class="panel-body">
-                        <form action="" v-on="submit: saveNewMovement">
-                            <div class="form-group">
-                                <label for="description">Description</label>
-                                <input type="text" class="form-control" id="description" v-model="new_movement.description" placeholder="e.g. 'Goods Inwards', 'Delivery', 'Shortage'">
-                            </div>
-                            <div class="form-group">
-                                <label for="reference">Reference</label>
-                                <input type="text" class="form-control" id="reference" v-model="new_movement.reference" placeholder="e.g. PO-1234">
-                            </div>
-                            <div class="form-group">
-                                <label for="quantity">Quantity</label>
-                                <input type="number" class="form-control" id="quantity" v-model="new_movement.quantity" >
-                            </div>
-                            <div class="form-group">
-                                <label for="">Created By</label>
-                                {{Auth::user()->name}}
-                            </div>
-                            <div class="form-group">
-                                <div class="col-sm-offset-3 col-sm-6">
-                                    <button type="submit" class="btn btn-default btn-block" v-attr="disabled: saving">Create</button>
-                                </div>
-                            </div>
-
-                        </form>
-                    </div>
-                    <div class="panel-footer">
                         <div class="row">
                             <div class="col-sm-5">
                                 <h4>Item details:</h4>
@@ -76,7 +49,6 @@
 
                             </div>
                         </div>
-
                     </div>
 
 

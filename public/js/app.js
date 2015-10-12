@@ -2364,646 +2364,6 @@ if (typeof jQuery === 'undefined') {
 }(jQuery);
 
 },{}],2:[function(require,module,exports){
-// shim for using process in browser
-
-var process = module.exports = {};
-var queue = [];
-var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-    draining = false;
-    if (currentQueue.length) {
-        queue = currentQueue.concat(queue);
-    } else {
-        queueIndex = -1;
-    }
-    if (queue.length) {
-        drainQueue();
-    }
-}
-
-function drainQueue() {
-    if (draining) {
-        return;
-    }
-    var timeout = setTimeout(cleanUpNextTick);
-    draining = true;
-
-    var len = queue.length;
-    while(len) {
-        currentQueue = queue;
-        queue = [];
-        while (++queueIndex < len) {
-            if (currentQueue) {
-                currentQueue[queueIndex].run();
-            }
-        }
-        queueIndex = -1;
-        len = queue.length;
-    }
-    currentQueue = null;
-    draining = false;
-    clearTimeout(timeout);
-}
-
-process.nextTick = function (fun) {
-    var args = new Array(arguments.length - 1);
-    if (arguments.length > 1) {
-        for (var i = 1; i < arguments.length; i++) {
-            args[i - 1] = arguments[i];
-        }
-    }
-    queue.push(new Item(fun, args));
-    if (queue.length === 1 && !draining) {
-        setTimeout(drainQueue, 0);
-    }
-};
-
-// v8 likes predictible objects
-function Item(fun, array) {
-    this.fun = fun;
-    this.array = array;
-}
-Item.prototype.run = function () {
-    this.fun.apply(null, this.array);
-};
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-process.version = ''; // empty string to avoid regexp issues
-process.versions = {};
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-};
-
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-process.umask = function() { return 0; };
-
-},{}],3:[function(require,module,exports){
-Vue.component('spark-simple-registration-screen', {
-    /*
-     * Bootstrap the component. Load the initial data.
-     */
-    ready: function () {
-        $(function() {
-            $('.spark-first-field').filter(':visible:first').focus();
-        });
-
-        var queryString = URI(document.URL).query(true);
-
-        if (queryString.invitation) {
-            this.getInvitation(queryString.invitation);
-        }
-    },
-
-    /*
-     * Initial state of the component's data.
-     */
-    data: function () {
-        return {
-            invitation: null,
-            failedToLoadInvitation: false,
-
-            registerForm: {
-                team_name: '', name: '', email: '', password: '', password_confirmation: '',
-                plan: '', terms: false, invitation: null, errors: [], registering: false
-            },
-        };
-    },
-
-
-    methods: {
-        /**
-         * Get the specified invitation.
-         */
-        getInvitation: function (invitation) {
-            this.$http.get('/spark/api/teams/invitation/' + invitation)
-                .success(function (invitation) {
-                    this.invitation = invitation;
-                    this.registerForm.invitation = invitation.token;
-
-                    setTimeout(function () {
-                        $(function() {
-                            $('.spark-first-field').filter(':visible:first').focus();
-                        });
-                    }, 250);
-                })
-                .error(function (errors) {
-                    this.failedToLoadInvitation = true;
-
-                    console.error('Unable to load invitation for given code.');
-                });
-        },
-
-
-        /*
-         * Initialize the registration process.
-         */
-        register: function(e) {
-            e.preventDefault();
-
-            this.registerForm.errors = [];
-            this.registerForm.registering = true;
-
-            this.$http.post('/register', this.registerForm)
-                .success(function(response) {
-                    window.location = response.path;
-                })
-                .error(function(errors) {
-                    this.registerForm.registering = false;
-                    Spark.setErrorsOnForm(this.registerForm, errors);
-                });
-        }
-    }
-});
-
-},{}],4:[function(require,module,exports){
-Vue.component('spark-subscription-register-screen', {
-    /*
-     * Bootstrap the component. Load the initial data.
-     */
-    ready: function() {
-        this.getPlans();
-
-        Stripe.setPublishableKey(STRIPE_KEY);
-
-        var queryString = URI(document.URL).query(true);
-
-        if (queryString.coupon) {
-            this.getCoupon(queryString.coupon);
-        }
-
-        if (queryString.invitation) {
-            this.getInvitation(queryString.invitation);
-        }
-    },
-
-
-    /*
-     * Initial state of the component's data.
-     */
-    data: function () {
-        return {
-            plans: [],
-            selectedPlan: null,
-            planTypeState: false,
-            currentCoupon: null,
-            invitation: null,
-            failedToLoadInvitation: false,
-
-            registerForm: {
-                team_name: '', name: '', email: '', password: '', password_confirmation: '',
-                plan: '', terms: false, coupon: null, invitation: null,
-                stripe_token: null, errors: [], registering: false
-            },
-
-            cardForm: {
-                number: '', cvc: '', month: '', year: '', zip: '', errors: []
-            }
-        };
-    },
-
-
-    computed: {
-        /*
-         * Determine if the plans have been loaded from the API.
-         */
-        plansAreLoaded: function() {
-            return this.plans.length > 0;
-        },
-
-
-        /*
-         * Get all of the "default" available plans. Typically this is monthly.
-         */
-        defaultPlans: function () {
-            if (this.monthlyPlans.length > 0) {
-                return this.monthlyPlans;
-            }
-
-            if (this.yearlyPlans.length > 0) {
-                return this.yearlyPlans;
-            }
-        },
-
-
-        /*
-         * Get all of the plans that have a mnthly interval.
-         */
-        monthlyPlans: function() {
-            return _.filter(this.plans, function(plan) {
-                return plan.interval == 'monthly' && plan.active;
-            });
-        },
-
-
-        /*
-         * Get all of the plans that have a yearly interval.
-         */
-        yearlyPlans: function() {
-            return _.filter(this.plans, function(plan) {
-                return plan.interval == 'yearly' && plan.active;
-            });
-        },
-
-
-        /*
-         * Determine if a free plan is currently selected during registration.
-         */
-        freePlanIsSelected: function() {
-            return this.selectedPlan && this.selectedPlan.price === 0;
-        },
-
-
-        /*
-         * Determine if the plan type selector is set to "monthly".
-         */
-        shouldShowDefaultPlans: function () {
-            return ! this.planTypeState;
-        },
-
-
-        /*
-         * Determine if the plan type selector is set to "yearly".
-         */
-        shouldShowYearlyPlans: function () {
-            return this.planTypeState;
-        },
-
-
-        /*
-         * Get the full selected plan price with currency symbol.
-         */
-        selectedPlanPrice: function () {
-            if (this.selectedPlan) {
-                return this.selectedPlan.currencySymbol + this.selectedPlan.price;
-            }
-        },
-
-
-        /*
-         * Get the displayable discount for the current coupon.
-         */
-        currentCouponDisplayDiscount: function () {
-            if (this.currentCoupon) {
-                if (this.currentCoupon.amountOff) {
-                    return '$' + this.currentCoupon.amountOff + ' Off';
-                }
-
-                if (this.currentCoupon.percentOff) {
-                    return this.currentCoupon.percentOff + '% Off';
-                }
-            }
-        },
-    },
-
-
-    methods: {
-        /*
-         * Get all of the Spark plans from the API.
-         */
-        getPlans: function() {
-            this.$http.get('spark/api/subscriptions/plans')
-                .success(function(plans) {
-                    var self = this;
-
-                    this.plans = _.filter(plans, function(plan) {
-                        return plan.active;
-                    });
-
-                    var queryString = URI(document.URL).query(true);
-
-                    // If there is only one plan, automatically select it...
-                    if (this.plans.length == 1) {
-                        this.setSelectedPlan(this.plans[0]);
-
-                        setTimeout(function () {
-                            $('.spark-first-field').filter(':visible:first').focus();
-                        }, 100);
-                    } else if (queryString.invitation) {
-                        // If an invitation was sent and there is a free plan, select it...
-                        _.each(this.plans, function (p) {
-                            if (p.price === 0) {
-                                return self.selectPlan(p);
-                            }
-                        });
-                    }
-                });
-        },
-
-
-        /*
-         * Get the specified coupon for registration.
-         */
-        getCoupon: function (coupon) {
-            this.$http.get('spark/api/subscriptions/coupon/' + coupon)
-                .success(function (coupon) {
-                    this.currentCoupon = coupon;
-                })
-                .error(function (errors) {
-                    console.error('Unable to load coupon for given code.');
-                });
-        },
-
-
-        /**
-         * Get the specified invitation.
-         */
-        getInvitation: function (invitation) {
-            this.$http.get('/spark/api/teams/invitation/' + invitation)
-                .success(function (invitation) {
-                    this.invitation = invitation;
-
-                    setTimeout(function () {
-                        $(function() {
-                            $('.spark-first-field').filter(':visible:first').focus();
-                        });
-                    }, 250);
-                })
-                .error(function (errors) {
-                    this.failedToLoadInvitation = true;
-
-                    console.error('Unable to load invitation for given code.');
-                });
-        },
-
-
-        /*
-         * Calculate the discounted price for plan based on current coupon.
-         */
-        getDiscountPlanPrice: function (price) {
-            if (this.currentCoupon) {
-                if (this.currentCoupon.amountOff) {
-                    price = price - this.currentCoupon.amountOff;
-                }
-
-                if (this.currentCoupon.percentOff) {
-                    price = price - (price * (this.currentCoupon.percentOff / 100));
-                }
-
-                if (price < 0) {
-                    return 0;
-                }
-
-                return price.toFixed(2);
-            }
-        },
-
-
-        /*
-         * Get the displayable discount duration for the current coupon.
-         */
-        getCouponDisplayDuration: function (plan) {
-            if (this.currentCoupon) {
-                if (this.currentCoupon.lastsOnce) {
-                    if (plan.interval == 'monthly') {
-                        return 'For The First Month';
-                    } else {
-                        return 'For The First Year';
-                    }
-                }
-
-                if (this.currentCoupon.lastsForever) {
-                    if (plan.interval == 'monthly') {
-                        return 'Monthly For Life';
-                    } else {
-                        return 'Yearly For Life';
-                    }
-                }
-
-                if (this.currentCoupon.months) {
-                    if (plan.interval == 'monthly') {
-                        return 'Monthly For The First ' + this.currentCoupon.months + ' Months';
-                    } else {
-                        return 'For The First Year';
-                    }
-                }
-            }
-        },
-
-
-        /*
-         * Select a plan from the list. Initialize registration form.
-         */
-        selectPlan: function(plan) {
-            this.setSelectedPlan(plan);
-
-            setTimeout(function() {
-                $('.spark-first-field')
-                        .filter(':visible:first')
-                        .focus();
-            }, 100);
-        },
-
-
-        /*
-         * Set the selected plan.
-         */
-        setSelectedPlan: function(plan) {
-            this.selectedPlan = plan;
-            this.registerForm.plan = plan.id;
-        },
-
-
-        /*
-         * Clear the selected plan from the component state.
-         */
-        selectAnotherPlan: function() {
-            this.selectedPlan = null;
-            this.registerForm.plan = '';
-        },
-
-
-        /*
-         * Initialize the registration process.
-         */
-        register: function(e) {
-            var self = this;
-
-            e.preventDefault();
-
-            this.cardForm.errors = [];
-            this.registerForm.errors = [];
-            this.registerForm.registering = true;
-
-            if (this.freePlanIsSelected) {
-                return this.sendRegistration();
-            }
-
-            /*
-                Here we will build the payload to send to Stripe, which will
-                return a token. This token can be used to make charges on
-                the user's credit cards instead of storing the numbers.
-            */
-            var payload = {
-                name: this.registerForm.name,
-                number: this.cardForm.number,
-                cvc: this.cardForm.cvc,
-                exp_month: this.cardForm.month,
-                exp_year: this.cardForm.year,
-                address_zip: this.cardForm.zip
-            };
-
-            Stripe.card.createToken(payload, function (status, response) {
-                if (response.error) {
-                    self.cardForm.errors.push(response.error.message);
-                    self.registerForm.registering = false;
-                } else {
-                    self.registerForm.stripe_token = response.id;
-                    self.sendRegistration();
-                }
-            });
-        },
-
-
-        /*
-         * After obtaining the Stripe token, send the registration to Spark.
-         */
-        sendRegistration: function() {
-            if (this.currentCoupon && ! this.freePlanIsSelected) {
-                this.registerForm.coupon = this.currentCoupon.id;
-            }
-
-            if (this.invitation) {
-                this.registerForm.invitation = this.invitation.token;
-            }
-
-            this.$http.post('/register', this.registerForm)
-                .success(function(response) {
-                    window.location = '/home';
-                })
-                .error(function(errors) {
-                    this.registerForm.registering = false;
-                    Spark.setErrorsOnForm(this.registerForm, errors);
-                });
-        },
-
-
-        /*
-         * Get the proper column width based on the number of plans.
-         */
-        getPlanColumnWidth: function(count) {
-            switch (count) {
-                case 1:
-                    return 'col-md-4 col-md-offset-4';
-                case 2:
-                    return 'col-md-6';
-                case 3:
-                    return 'col-md-4';
-                case 4:
-                    return 'col-md-3';
-                default:
-                    console.error("Spark only supports up to 4 plans per interval.");
-            }
-        },
-    }
-});
-
-},{}],5:[function(require,module,exports){
-/*
- * Common Error Display Component.
- */
-Vue.component('spark-errors', {
-    props: ['form'],
-
-    template: "<div><div class='alert alert-danger' v-if='form.errors.length > 0'>\
-                <strong>Whoops!</strong> There were some problems with your input.<br><br>\
-                <ul>\
-                    <li v-repeat='error : form.errors'>\
-                        {{ error }}\
-                    </li>\
-                </ul>\
-            </div></div>"
-});
-
-},{}],6:[function(require,module,exports){
-require('./../common/errors');
-require('./../nav');
-require('./../auth/registration/simple');
-require('./../auth/registration/subscription');
-require('./../settings/dashboard');
-require('./../settings/dashboard/subscription');
-require('./../settings/dashboard/teams');
-require('./../settings/team');
-require('./../settings/team/membership');
-
-},{"./../auth/registration/simple":3,"./../auth/registration/subscription":4,"./../common/errors":5,"./../nav":8,"./../settings/dashboard":86,"./../settings/dashboard/subscription":90,"./../settings/dashboard/teams":91,"./../settings/team":92,"./../settings/team/membership":93}],7:[function(require,module,exports){
-/*
- * Load Vue & Vue-Resource.
- *
- * Vue is the JavaScript framework used by Spark.
- */
-window.Vue = require('vue');
-
-require('vue-resource');
-Vue.http.headers.common['X-CSRF-TOKEN'] = Spark.csrfToken;
-
-/*
- * Load Underscore.js, used for map / reduce on arrays.
- */
-window._ = require('underscore');
-
-/*
- * Load Moment.js, used for date formatting and presentation.
- */
-window.moment = require('moment');
-
-/*
- * Load jQuery and Bootstrap jQuery, used for front-end interaction.
- */
-window.$ = window.jQuery = require('jquery');
-require('bootstrap-sass/assets/javascripts/bootstrap');
-
-
-},{"bootstrap-sass/assets/javascripts/bootstrap":1,"jquery":9,"moment":10,"underscore":11,"vue":84,"vue-resource":13}],8:[function(require,module,exports){
-Vue.component('spark-nav-bar-dropdown', {
-    /*
-     * Initial state of the component's data.
-     */
-	data: function () {
-		return {
-			user: null,
-			teams: []
-		};
-	},
-
-
-	events: {
-        /**
-         * Handle the "userRetrieved" event.
-         */
-		userRetrieved: function (user) {
-			this.user = user;
-		},
-
-
-        /**
-         * Handle the "teamsRetrieved" event.
-         */
-		teamsRetrieved: function (teams) {
-			this.teams = teams;
-		}
-	}
-});
-
-},{}],9:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v2.1.4
  * http://jquery.com/
@@ -12215,6 +11575,646 @@ return jQuery;
 
 }));
 
+},{}],3:[function(require,module,exports){
+// shim for using process in browser
+
+var process = module.exports = {};
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = setTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    clearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        setTimeout(drainQueue, 0);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+},{}],4:[function(require,module,exports){
+Vue.component('spark-simple-registration-screen', {
+    /*
+     * Bootstrap the component. Load the initial data.
+     */
+    ready: function () {
+        $(function() {
+            $('.spark-first-field').filter(':visible:first').focus();
+        });
+
+        var queryString = URI(document.URL).query(true);
+
+        if (queryString.invitation) {
+            this.getInvitation(queryString.invitation);
+        }
+    },
+
+    /*
+     * Initial state of the component's data.
+     */
+    data: function () {
+        return {
+            invitation: null,
+            failedToLoadInvitation: false,
+
+            registerForm: {
+                team_name: '', name: '', email: '', password: '', password_confirmation: '',
+                plan: '', terms: false, invitation: null, errors: [], registering: false
+            },
+        };
+    },
+
+
+    methods: {
+        /**
+         * Get the specified invitation.
+         */
+        getInvitation: function (invitation) {
+            this.$http.get('/spark/api/teams/invitation/' + invitation)
+                .success(function (invitation) {
+                    this.invitation = invitation;
+                    this.registerForm.invitation = invitation.token;
+
+                    setTimeout(function () {
+                        $(function() {
+                            $('.spark-first-field').filter(':visible:first').focus();
+                        });
+                    }, 250);
+                })
+                .error(function (errors) {
+                    this.failedToLoadInvitation = true;
+
+                    console.error('Unable to load invitation for given code.');
+                });
+        },
+
+
+        /*
+         * Initialize the registration process.
+         */
+        register: function(e) {
+            e.preventDefault();
+
+            this.registerForm.errors = [];
+            this.registerForm.registering = true;
+
+            this.$http.post('/register', this.registerForm)
+                .success(function(response) {
+                    window.location = response.path;
+                })
+                .error(function(errors) {
+                    this.registerForm.registering = false;
+                    Spark.setErrorsOnForm(this.registerForm, errors);
+                });
+        }
+    }
+});
+
+},{}],5:[function(require,module,exports){
+Vue.component('spark-subscription-register-screen', {
+    /*
+     * Bootstrap the component. Load the initial data.
+     */
+    ready: function() {
+        this.getPlans();
+
+        Stripe.setPublishableKey(STRIPE_KEY);
+
+        var queryString = URI(document.URL).query(true);
+
+        if (queryString.coupon) {
+            this.getCoupon(queryString.coupon);
+        }
+
+        if (queryString.invitation) {
+            this.getInvitation(queryString.invitation);
+        }
+    },
+
+
+    /*
+     * Initial state of the component's data.
+     */
+    data: function () {
+        return {
+            plans: [],
+            selectedPlan: null,
+            planTypeState: false,
+            currentCoupon: null,
+            invitation: null,
+            failedToLoadInvitation: false,
+
+            registerForm: {
+                team_name: '', name: '', email: '', password: '', password_confirmation: '',
+                plan: '', terms: false, coupon: null, invitation: null,
+                stripe_token: null, errors: [], registering: false
+            },
+
+            cardForm: {
+                number: '', cvc: '', month: '', year: '', zip: '', errors: []
+            }
+        };
+    },
+
+
+    computed: {
+        /*
+         * Determine if the plans have been loaded from the API.
+         */
+        plansAreLoaded: function() {
+            return this.plans.length > 0;
+        },
+
+
+        /*
+         * Get all of the "default" available plans. Typically this is monthly.
+         */
+        defaultPlans: function () {
+            if (this.monthlyPlans.length > 0) {
+                return this.monthlyPlans;
+            }
+
+            if (this.yearlyPlans.length > 0) {
+                return this.yearlyPlans;
+            }
+        },
+
+
+        /*
+         * Get all of the plans that have a mnthly interval.
+         */
+        monthlyPlans: function() {
+            return _.filter(this.plans, function(plan) {
+                return plan.interval == 'monthly' && plan.active;
+            });
+        },
+
+
+        /*
+         * Get all of the plans that have a yearly interval.
+         */
+        yearlyPlans: function() {
+            return _.filter(this.plans, function(plan) {
+                return plan.interval == 'yearly' && plan.active;
+            });
+        },
+
+
+        /*
+         * Determine if a free plan is currently selected during registration.
+         */
+        freePlanIsSelected: function() {
+            return this.selectedPlan && this.selectedPlan.price === 0;
+        },
+
+
+        /*
+         * Determine if the plan type selector is set to "monthly".
+         */
+        shouldShowDefaultPlans: function () {
+            return ! this.planTypeState;
+        },
+
+
+        /*
+         * Determine if the plan type selector is set to "yearly".
+         */
+        shouldShowYearlyPlans: function () {
+            return this.planTypeState;
+        },
+
+
+        /*
+         * Get the full selected plan price with currency symbol.
+         */
+        selectedPlanPrice: function () {
+            if (this.selectedPlan) {
+                return this.selectedPlan.currencySymbol + this.selectedPlan.price;
+            }
+        },
+
+
+        /*
+         * Get the displayable discount for the current coupon.
+         */
+        currentCouponDisplayDiscount: function () {
+            if (this.currentCoupon) {
+                if (this.currentCoupon.amountOff) {
+                    return '$' + this.currentCoupon.amountOff + ' Off';
+                }
+
+                if (this.currentCoupon.percentOff) {
+                    return this.currentCoupon.percentOff + '% Off';
+                }
+            }
+        },
+    },
+
+
+    methods: {
+        /*
+         * Get all of the Spark plans from the API.
+         */
+        getPlans: function() {
+            this.$http.get('spark/api/subscriptions/plans')
+                .success(function(plans) {
+                    var self = this;
+
+                    this.plans = _.filter(plans, function(plan) {
+                        return plan.active;
+                    });
+
+                    var queryString = URI(document.URL).query(true);
+
+                    // If there is only one plan, automatically select it...
+                    if (this.plans.length == 1) {
+                        this.setSelectedPlan(this.plans[0]);
+
+                        setTimeout(function () {
+                            $('.spark-first-field').filter(':visible:first').focus();
+                        }, 100);
+                    } else if (queryString.invitation) {
+                        // If an invitation was sent and there is a free plan, select it...
+                        _.each(this.plans, function (p) {
+                            if (p.price === 0) {
+                                return self.selectPlan(p);
+                            }
+                        });
+                    }
+                });
+        },
+
+
+        /*
+         * Get the specified coupon for registration.
+         */
+        getCoupon: function (coupon) {
+            this.$http.get('spark/api/subscriptions/coupon/' + coupon)
+                .success(function (coupon) {
+                    this.currentCoupon = coupon;
+                })
+                .error(function (errors) {
+                    console.error('Unable to load coupon for given code.');
+                });
+        },
+
+
+        /**
+         * Get the specified invitation.
+         */
+        getInvitation: function (invitation) {
+            this.$http.get('/spark/api/teams/invitation/' + invitation)
+                .success(function (invitation) {
+                    this.invitation = invitation;
+
+                    setTimeout(function () {
+                        $(function() {
+                            $('.spark-first-field').filter(':visible:first').focus();
+                        });
+                    }, 250);
+                })
+                .error(function (errors) {
+                    this.failedToLoadInvitation = true;
+
+                    console.error('Unable to load invitation for given code.');
+                });
+        },
+
+
+        /*
+         * Calculate the discounted price for plan based on current coupon.
+         */
+        getDiscountPlanPrice: function (price) {
+            if (this.currentCoupon) {
+                if (this.currentCoupon.amountOff) {
+                    price = price - this.currentCoupon.amountOff;
+                }
+
+                if (this.currentCoupon.percentOff) {
+                    price = price - (price * (this.currentCoupon.percentOff / 100));
+                }
+
+                if (price < 0) {
+                    return 0;
+                }
+
+                return price.toFixed(2);
+            }
+        },
+
+
+        /*
+         * Get the displayable discount duration for the current coupon.
+         */
+        getCouponDisplayDuration: function (plan) {
+            if (this.currentCoupon) {
+                if (this.currentCoupon.lastsOnce) {
+                    if (plan.interval == 'monthly') {
+                        return 'For The First Month';
+                    } else {
+                        return 'For The First Year';
+                    }
+                }
+
+                if (this.currentCoupon.lastsForever) {
+                    if (plan.interval == 'monthly') {
+                        return 'Monthly For Life';
+                    } else {
+                        return 'Yearly For Life';
+                    }
+                }
+
+                if (this.currentCoupon.months) {
+                    if (plan.interval == 'monthly') {
+                        return 'Monthly For The First ' + this.currentCoupon.months + ' Months';
+                    } else {
+                        return 'For The First Year';
+                    }
+                }
+            }
+        },
+
+
+        /*
+         * Select a plan from the list. Initialize registration form.
+         */
+        selectPlan: function(plan) {
+            this.setSelectedPlan(plan);
+
+            setTimeout(function() {
+                $('.spark-first-field')
+                        .filter(':visible:first')
+                        .focus();
+            }, 100);
+        },
+
+
+        /*
+         * Set the selected plan.
+         */
+        setSelectedPlan: function(plan) {
+            this.selectedPlan = plan;
+            this.registerForm.plan = plan.id;
+        },
+
+
+        /*
+         * Clear the selected plan from the component state.
+         */
+        selectAnotherPlan: function() {
+            this.selectedPlan = null;
+            this.registerForm.plan = '';
+        },
+
+
+        /*
+         * Initialize the registration process.
+         */
+        register: function(e) {
+            var self = this;
+
+            e.preventDefault();
+
+            this.cardForm.errors = [];
+            this.registerForm.errors = [];
+            this.registerForm.registering = true;
+
+            if (this.freePlanIsSelected) {
+                return this.sendRegistration();
+            }
+
+            /*
+                Here we will build the payload to send to Stripe, which will
+                return a token. This token can be used to make charges on
+                the user's credit cards instead of storing the numbers.
+            */
+            var payload = {
+                name: this.registerForm.name,
+                number: this.cardForm.number,
+                cvc: this.cardForm.cvc,
+                exp_month: this.cardForm.month,
+                exp_year: this.cardForm.year,
+                address_zip: this.cardForm.zip
+            };
+
+            Stripe.card.createToken(payload, function (status, response) {
+                if (response.error) {
+                    self.cardForm.errors.push(response.error.message);
+                    self.registerForm.registering = false;
+                } else {
+                    self.registerForm.stripe_token = response.id;
+                    self.sendRegistration();
+                }
+            });
+        },
+
+
+        /*
+         * After obtaining the Stripe token, send the registration to Spark.
+         */
+        sendRegistration: function() {
+            if (this.currentCoupon && ! this.freePlanIsSelected) {
+                this.registerForm.coupon = this.currentCoupon.id;
+            }
+
+            if (this.invitation) {
+                this.registerForm.invitation = this.invitation.token;
+            }
+
+            this.$http.post('/register', this.registerForm)
+                .success(function(response) {
+                    window.location = '/home';
+                })
+                .error(function(errors) {
+                    this.registerForm.registering = false;
+                    Spark.setErrorsOnForm(this.registerForm, errors);
+                });
+        },
+
+
+        /*
+         * Get the proper column width based on the number of plans.
+         */
+        getPlanColumnWidth: function(count) {
+            switch (count) {
+                case 1:
+                    return 'col-md-4 col-md-offset-4';
+                case 2:
+                    return 'col-md-6';
+                case 3:
+                    return 'col-md-4';
+                case 4:
+                    return 'col-md-3';
+                default:
+                    console.error("Spark only supports up to 4 plans per interval.");
+            }
+        },
+    }
+});
+
+},{}],6:[function(require,module,exports){
+/*
+ * Common Error Display Component.
+ */
+Vue.component('spark-errors', {
+    props: ['form'],
+
+    template: "<div><div class='alert alert-danger' v-if='form.errors.length > 0'>\
+                <strong>Whoops!</strong> There were some problems with your input.<br><br>\
+                <ul>\
+                    <li v-repeat='error : form.errors'>\
+                        {{ error }}\
+                    </li>\
+                </ul>\
+            </div></div>"
+});
+
+},{}],7:[function(require,module,exports){
+require('./../common/errors');
+require('./../nav');
+require('./../auth/registration/simple');
+require('./../auth/registration/subscription');
+require('./../settings/dashboard');
+require('./../settings/dashboard/subscription');
+require('./../settings/dashboard/teams');
+require('./../settings/team');
+require('./../settings/team/membership');
+
+},{"./../auth/registration/simple":4,"./../auth/registration/subscription":5,"./../common/errors":6,"./../nav":9,"./../settings/dashboard":86,"./../settings/dashboard/subscription":90,"./../settings/dashboard/teams":91,"./../settings/team":92,"./../settings/team/membership":93}],8:[function(require,module,exports){
+/*
+ * Load Vue & Vue-Resource.
+ *
+ * Vue is the JavaScript framework used by Spark.
+ */
+window.Vue = require('vue');
+
+require('vue-resource');
+Vue.http.headers.common['X-CSRF-TOKEN'] = Spark.csrfToken;
+
+/*
+ * Load Underscore.js, used for map / reduce on arrays.
+ */
+window._ = require('underscore');
+
+/*
+ * Load Moment.js, used for date formatting and presentation.
+ */
+window.moment = require('moment');
+
+/*
+ * Load jQuery and Bootstrap jQuery, used for front-end interaction.
+ */
+window.$ = window.jQuery = require('jquery');
+require('bootstrap-sass/assets/javascripts/bootstrap');
+
+
+},{"bootstrap-sass/assets/javascripts/bootstrap":1,"jquery":2,"moment":10,"underscore":11,"vue":84,"vue-resource":13}],9:[function(require,module,exports){
+Vue.component('spark-nav-bar-dropdown', {
+    /*
+     * Initial state of the component's data.
+     */
+	data: function () {
+		return {
+			user: null,
+			teams: []
+		};
+	},
+
+
+	events: {
+        /**
+         * Handle the "userRetrieved" event.
+         */
+		userRetrieved: function (user) {
+			this.user = user;
+		},
+
+
+        /**
+         * Handle the "teamsRetrieved" event.
+         */
+		teamsRetrieved: function (teams) {
+			this.teams = teams;
+		}
+	}
+});
+
 },{}],10:[function(require,module,exports){
 //! moment.js
 //! version : 2.10.6
@@ -18654,7 +18654,7 @@ exports.$compile = function (el, host) {
 }
 
 }).call(this,require('_process'))
-},{"../compiler":30,"../util":81,"_process":2}],26:[function(require,module,exports){
+},{"../compiler":30,"../util":81,"_process":3}],26:[function(require,module,exports){
 (function (process){
 var _ = require('./util')
 var config = require('./config')
@@ -18756,7 +18756,7 @@ exports.push = function (watcher) {
 }
 
 }).call(this,require('_process'))
-},{"./config":32,"./util":81,"_process":2}],27:[function(require,module,exports){
+},{"./config":32,"./util":81,"_process":3}],27:[function(require,module,exports){
 /**
  * A doubly linked list-based Least Recently Used (LRU)
  * cache. Will keep most recently used items while
@@ -19057,7 +19057,7 @@ function getDefault (options) {
 }
 
 }).call(this,require('_process'))
-},{"../config":32,"../directives/prop":48,"../parsers/path":71,"../parsers/text":73,"../util":81,"_process":2}],29:[function(require,module,exports){
+},{"../config":32,"../directives/prop":48,"../parsers/path":71,"../parsers/text":73,"../util":81,"_process":3}],29:[function(require,module,exports){
 (function (process){
 var _ = require('../util')
 var compileProps = require('./compile-props')
@@ -19691,7 +19691,7 @@ function directiveComparator (a, b) {
 }
 
 }).call(this,require('_process'))
-},{"../config":32,"../directives/component":37,"../parsers/directive":69,"../parsers/template":72,"../parsers/text":73,"../util":81,"./compile-props":28,"_process":2}],30:[function(require,module,exports){
+},{"../config":32,"../directives/component":37,"../parsers/directive":69,"../parsers/template":72,"../parsers/text":73,"../util":81,"./compile-props":28,"_process":3}],30:[function(require,module,exports){
 var _ = require('../util')
 
 _.extend(exports, require('./compile'))
@@ -19845,7 +19845,7 @@ function mergeAttrs (from, to) {
 }
 
 }).call(this,require('_process'))
-},{"../config":32,"../parsers/template":72,"../util":81,"_process":2}],32:[function(require,module,exports){
+},{"../config":32,"../parsers/template":72,"../util":81,"_process":3}],32:[function(require,module,exports){
 module.exports = {
 
   /**
@@ -20229,7 +20229,7 @@ Directive.prototype._teardown = function () {
 module.exports = Directive
 
 }).call(this,require('_process'))
-},{"./config":32,"./parsers/expression":70,"./parsers/text":73,"./util":81,"./watcher":85,"_process":2}],34:[function(require,module,exports){
+},{"./config":32,"./parsers/expression":70,"./parsers/text":73,"./util":81,"./watcher":85,"_process":3}],34:[function(require,module,exports){
 // xlink
 var xlinkNS = 'http://www.w3.org/1999/xlink'
 var xlinkRE = /^xlink:/
@@ -20722,7 +20722,7 @@ module.exports = {
 }
 
 }).call(this,require('_process'))
-},{"../config":32,"../parsers/template":72,"../util":81,"_process":2}],38:[function(require,module,exports){
+},{"../config":32,"../parsers/template":72,"../util":81,"_process":3}],38:[function(require,module,exports){
 module.exports = {
 
   isLiteral: true,
@@ -20907,7 +20907,7 @@ function callDetach (child) {
 }
 
 }).call(this,require('_process'))
-},{"../cache":27,"../compiler":30,"../parsers/template":72,"../transition":74,"../util":81,"_process":2}],41:[function(require,module,exports){
+},{"../cache":27,"../compiler":30,"../parsers/template":72,"../transition":74,"../util":81,"_process":3}],41:[function(require,module,exports){
 // manipulation directives
 exports.text = require('./text')
 exports.html = require('./html')
@@ -21063,7 +21063,7 @@ module.exports = {
 }
 
 }).call(this,require('_process'))
-},{"../../util":81,"./checkbox":42,"./radio":44,"./select":45,"./text":46,"_process":2}],44:[function(require,module,exports){
+},{"../../util":81,"./checkbox":42,"./radio":44,"./select":45,"./text":46,"_process":3}],44:[function(require,module,exports){
 var _ = require('../../util')
 
 module.exports = {
@@ -21338,7 +21338,7 @@ function indexOf (arr, val) {
 }
 
 }).call(this,require('_process'))
-},{"../../parsers/directive":69,"../../util":81,"../../watcher":85,"_process":2}],46:[function(require,module,exports){
+},{"../../parsers/directive":69,"../../util":81,"../../watcher":85,"_process":3}],46:[function(require,module,exports){
 var _ = require('../../util')
 
 module.exports = {
@@ -21535,7 +21535,7 @@ module.exports = {
 }
 
 }).call(this,require('_process'))
-},{"../util":81,"_process":2}],48:[function(require,module,exports){
+},{"../util":81,"_process":3}],48:[function(require,module,exports){
 // NOTE: the prop internal directive is compiled and linked
 // during _initScope(), before the created hook is called.
 // The purpose is to make the initial prop values available
@@ -21625,7 +21625,7 @@ module.exports = {
 }
 
 }).call(this,require('_process'))
-},{"../util":81,"_process":2}],50:[function(require,module,exports){
+},{"../util":81,"_process":3}],50:[function(require,module,exports){
 (function (process){
 var _ = require('../util')
 var config = require('../config')
@@ -22399,7 +22399,7 @@ function isPrimitive (value) {
 }
 
 }).call(this,require('_process'))
-},{"../compiler":30,"../config":32,"../parsers/expression":70,"../parsers/template":72,"../parsers/text":73,"../util":81,"_process":2}],51:[function(require,module,exports){
+},{"../compiler":30,"../config":32,"../parsers/expression":70,"../parsers/template":72,"../parsers/text":73,"../util":81,"_process":3}],51:[function(require,module,exports){
 var transition = require('../transition')
 
 module.exports = function (value) {
@@ -22759,7 +22759,7 @@ module.exports = {
 }
 
 }).call(this,require('_process'))
-},{"../cache":27,"../compiler":30,"../directives/if":40,"../parsers/template":72,"../parsers/text":73,"../util":81,"_process":2}],58:[function(require,module,exports){
+},{"../cache":27,"../compiler":30,"../directives/if":40,"../parsers/template":72,"../parsers/text":73,"../util":81,"_process":3}],58:[function(require,module,exports){
 var _ = require('../util')
 var Path = require('../parsers/path')
 
@@ -23351,7 +23351,7 @@ exports._callHook = function (hook) {
 }
 
 }).call(this,require('_process'))
-},{"../util":81,"_process":2}],62:[function(require,module,exports){
+},{"../util":81,"_process":3}],62:[function(require,module,exports){
 var mergeOptions = require('../util').mergeOptions
 
 /**
@@ -23539,7 +23539,7 @@ exports._resolveComponent = function (id, cb) {
 }
 
 }).call(this,require('_process'))
-},{"../util":81,"_process":2}],64:[function(require,module,exports){
+},{"../util":81,"_process":3}],64:[function(require,module,exports){
 (function (process){
 var _ = require('../util')
 var compiler = require('../compiler')
@@ -23825,7 +23825,7 @@ exports._defineMeta = function (key, value) {
 }
 
 }).call(this,require('_process'))
-},{"../compiler":30,"../observer":67,"../observer/dep":66,"../util":81,"../watcher":85,"_process":2}],65:[function(require,module,exports){
+},{"../compiler":30,"../observer":67,"../observer/dep":66,"../util":81,"../watcher":85,"_process":3}],65:[function(require,module,exports){
 var _ = require('../util')
 var arrayProto = Array.prototype
 var arrayMethods = Object.create(arrayProto)
@@ -24758,7 +24758,7 @@ exports.isSimplePath = function (exp) {
 }
 
 }).call(this,require('_process'))
-},{"../cache":27,"../util":81,"./path":71,"_process":2}],71:[function(require,module,exports){
+},{"../cache":27,"../util":81,"./path":71,"_process":3}],71:[function(require,module,exports){
 (function (process){
 var _ = require('../util')
 var Cache = require('../cache')
@@ -25110,7 +25110,7 @@ function warnNonExistent (path) {
 }
 
 }).call(this,require('_process'))
-},{"../cache":27,"../util":81,"_process":2}],72:[function(require,module,exports){
+},{"../cache":27,"../util":81,"_process":3}],72:[function(require,module,exports){
 var _ = require('../util')
 var Cache = require('../cache')
 var templateCache = new Cache(1000)
@@ -26234,7 +26234,7 @@ function formatValue (val) {
 }
 
 }).call(this,require('_process'))
-},{"./index":81,"_process":2}],78:[function(require,module,exports){
+},{"./index":81,"_process":3}],78:[function(require,module,exports){
 (function (process){
 /**
  * Enable debug utilities.
@@ -26302,7 +26302,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 }).call(this,require('_process'))
-},{"../config":32,"_process":2}],79:[function(require,module,exports){
+},{"../config":32,"_process":3}],79:[function(require,module,exports){
 (function (process){
 var _ = require('./index')
 var config = require('../config')
@@ -26578,7 +26578,7 @@ exports.createAnchor = function (content, persist) {
 }
 
 }).call(this,require('_process'))
-},{"../config":32,"./index":81,"_process":2}],80:[function(require,module,exports){
+},{"../config":32,"./index":81,"_process":3}],80:[function(require,module,exports){
 // can we use __proto__?
 exports.hasProto = '__proto__' in {}
 
@@ -27349,7 +27349,7 @@ exports.resolveAsset = function resolve (options, type, id) {
 }
 
 }).call(this,require('_process'))
-},{"../config":32,"./index":81,"_process":2}],84:[function(require,module,exports){
+},{"../config":32,"./index":81,"_process":3}],84:[function(require,module,exports){
 var _ = require('./util')
 var extend = _.extend
 
@@ -27756,7 +27756,7 @@ function traverse (obj) {
 module.exports = Watcher
 
 }).call(this,require('_process'))
-},{"./batcher":26,"./config":32,"./observer/dep":66,"./parsers/expression":70,"./util":81,"_process":2}],86:[function(require,module,exports){
+},{"./batcher":26,"./config":32,"./observer/dep":66,"./parsers/expression":70,"./util":81,"_process":3}],86:[function(require,module,exports){
 Vue.component('spark-settings-screen', {
     /*
      * Bootstrap the component. Load the initial data.
@@ -29247,7 +29247,7 @@ module.exports = {
     }
 };
 
-},{"./core/components":6}],97:[function(require,module,exports){
+},{"./core/components":7}],97:[function(require,module,exports){
 
 /*
  |--------------------------------------------------------------------------
@@ -29274,7 +29274,7 @@ if ($('#spark-app').length > 0) {
   new Vue(require('laravel-spark'));
 }
 
-},{"./spark/components":98,"laravel-spark":96,"laravel-spark/core/dependencies":7}],98:[function(require,module,exports){
+},{"./spark/components":98,"laravel-spark":96,"laravel-spark/core/dependencies":8}],98:[function(require,module,exports){
 
 /*
  |--------------------------------------------------------------------------

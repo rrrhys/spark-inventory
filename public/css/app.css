@@ -6450,4 +6450,7 @@ body {
 .btn-clear-selected-item {
   cursor: pointer; }
 
+.crumb {
+  padding-bottom: 10px; }
+
 /*# sourceMappingURL=app.css.map */
