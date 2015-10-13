@@ -6441,7 +6441,7 @@ body {
   text-align: left; }
 
 .overlay-alert {
-  position: absolute;
+  position: fixed;
   top: 80px;
   left: 40px;
   right: 40px;

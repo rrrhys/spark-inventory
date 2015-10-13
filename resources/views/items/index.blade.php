@@ -33,46 +33,30 @@
 
                     <input type="hidden" name="" v-model="client_filter"><br/>
 
-
+                    <!-- inline create new record -->
                     <table class="table table-bordered table-striped table-hover">
                         <tr>
-                            <th class="col-md-3">Item Name</th>
-                            <th>Client</th>
-                            <th>Code</th>
-                            <th class="col-md-2">Quantity</th>
-                            <th class="col-md-2">Minimum Level</th>
-                            <th>Created</th>
+                            <th
+                                    v-repeat="column in columns"
+                                    v-on="click: sortBy(column.id)">
+                                @{{ column.name }}
+                                <span class="fa fa-caret-up" v-if="sortKey == column.id && reverse == false"></span>
+                                <span class="fa fa-caret-down" v-if="sortKey == column.id && reverse == true"></span>
+                            </th>
                             <th>Actions</th>
                         </tr>
-                        <tr class="clickable" v-repeat="item in items" v-on="click: redirectToURL('/items/' + item.id)">
-                            <td>@{{ item.item_name}}</td>
-                            <td>@{{ item.client.name }}</td>
-                            <td>@{{ item.item_code }}</td>
-                            <td>@{{ item.quantity }}</td>
-                            <td>@{{ item.minimum_level }}</td>
-                            <td title="@{{ item.created_at }}">@{{item.human_created_at}}</td>
+                        <tr class="clickable"
+                            v-repeat="item in items | orderBy sortKey reverse"
+                            v-on="click: redirectToURL('/items/' + item.id)"
+                                >
+                            <td
+                                    v-repeat="column in columns"
+                                    v-attr="title: column.id == 'created_at' ? item.created_at : ''">
+                                @{{ column.id == 'created_at' ? item.human_created_at : item[column.id] }}
+                            </td>
                             <td>
-                                <div class="dropdown">
-                                    <button
-                                            class="btn btn-default dropdown-toggle btn-block"
-                                            type="button"
-                                            data-toggle="dropdown"
-                                            aria-haspopup="true"
-                                            aria-expanded="true"
-                                            v-on="click: deleteConfirm = false">
-                                        Actions
-                                        <span class="caret"></span>
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a href="#">Edit</a></li>
-                                        <li>
-                                            <a v-on="click:deleteAreYouSure" v-show="!deleteConfirm">Delete</a>
-                                            <a v-show="deleteConfirm" class="bg-danger">Are you sure?
-                                                <button class="btn btn-link" v-on="click: deleteItem(item, $event)">Yes</button></a>
-                                        </li>
-                                    </ul>
+                                @include("crud.index-actions")
 
-                                </div>
                             </td>
                         </tr>
                         <tr v-if="items.length == 0">
@@ -84,7 +68,9 @@
                             </td>
                             <td>
                                 <input type="text" class="form-control" data-provide="typeahead" id="client-name-typeahead"
-                                       v-on="change: getSelectedClient, keyup: getSelectedClient | key 'enter'">
+                                       v-on="change: getSelectedClient, keyup: getSelectedClient | key 'enter'"
+                                       v-model="new_item.client_name">
+
                                 <input type="hidden" name="" v-model="new_item.client_id">
                             </td>
                             <td>
@@ -102,6 +88,7 @@
                             </td>
                         </tr>
                     </table>
+                    <!-- end inline create new record -->
                 </div>
             </div>
         </div>
