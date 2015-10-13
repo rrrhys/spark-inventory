@@ -39,8 +39,34 @@
 										</ul>
 									</div>
 								</div></div>
-							<div class="col-md-4"></div>
-							<div class="col-md-4"></div>
+
+							<div class="col-md-8">
+								<div class="panel panel-info">
+									<div class="panel-heading">Feed</div>
+									<div class="panel-body">
+
+
+										<table class="table">
+											<tr>
+												<th>Item</th>
+												<th>When</th>
+												<th>Quantity</th>
+												<th>Notes</th>
+											</tr>
+											<tr v-repeat="feed">
+												<td>@{{ item.item_name }}</td>
+												<td title="@{{ created_at }}">@{{human_created_at}}</td>
+												<td>@{{ quantity }}</td>
+												<td>@{{ description }}</td>
+											</tr>
+											<tr v-if="feed.length == 0">
+												<td colspan="42">No recent movements</td>
+											</tr>
+										</table>
+
+									</div>
+								</div>
+							</div>
 						</div>
 						<div class="row">
 							<div class="col-md-4">
@@ -111,31 +137,6 @@
 													v-on="click: redirectToURL('/items/' + selectedItem.id + '/movements/')">
 												<span class="fa fa-bar-chart"></span> Movement Report</button>
 										</div>
-									</div>
-								</div>
-							</div>
-							<div class="col-md-4">
-								<div class="panel panel-info">
-									<div class="panel-heading">Feed</div>
-									<div class="panel-body">
-
-
-                                        <table class="table">
-                                            <tr>
-                                                <th>When</th>
-                                                <th>Quantity</th>
-                                                <th>Notes</th>
-                                            </tr>
-                                            <tr v-repeat="feed">
-                                                <td title="@{{ created_at }}">@{{human_created_at}}</td>
-                                                <td>@{{ quantity }}</td>
-                                                <td>@{{ description }}</td>
-                                            </tr>
-                                            <tr v-if="feed.length == 0">
-                                                <td colspan="42">No recent movements</td>
-                                            </tr>
-                                        </table>
-
 									</div>
 								</div>
 							</div>

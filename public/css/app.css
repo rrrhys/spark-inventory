@@ -6453,4 +6453,7 @@ body {
 .crumb {
   padding-bottom: 10px; }
 
+.clickable {
+  cursor: pointer; }
+
 /*# sourceMappingURL=app.css.map */

@@ -9,7 +9,7 @@ class Item extends Model
 {
     //
 
-    protected $fillable = ['item_name', 'item_code', 'quantity', 'minimum_level'];
+    protected $fillable = ['item_name', 'item_code', 'quantity', 'minimum_level', 'client_id'];
     protected $appends = array('human_created_at');
     protected $dates = ['deleted_at'];
 
@@ -40,4 +40,9 @@ class Item extends Model
     public function movements(){
         return $this->hasMany('App\Movement')->orderBy('created_at','desc');
     }
+
+    public function client(){
+        return $this->belongsTo('App\Client');
+    }
+
 }

@@ -8,6 +8,10 @@ use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
 
+/**
+ * Class ItemsController
+ * @package App\Http\Controllers\API
+ */
 class ItemsController extends Controller
 {
     /**
@@ -15,15 +19,31 @@ class ItemsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
         //
         $user = Auth::User();
-        $items = $user->items;
-        return response()->json([
-            'result'=>'success',
-            'items'=>$items->toArray()
-        ], 200);
+        ;
+        $perPage = 20;
+        if($request->has('perPage')){
+            $perPage = $request->get('perPage');
+        }
+
+        $clientId = null;
+        if($request->has('clientId')){
+            $clientId = $request->get('clientId');
+            $client = $user->clients()->whereId($clientId)->firstOrFail();
+            $response = $client->items()->with('Client')->paginate($perPage);
+        }
+        else{
+            $response = $user->items()->with('Client')->paginate($perPage);
+        }
+
+
+
+
+
+        return response()->json($response, 200);
     }
 
     public function find($string){
@@ -53,7 +73,7 @@ class ItemsController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(Requests\CreateItemRequest $request)
     {
         //
         $user = Auth::User();
@@ -63,7 +83,10 @@ class ItemsController extends Controller
         else{
 
             $item = new Item($request->all());
-            $user->items()->save($item);
+            $item = $user->items()->save($item);
+
+            //populate relation
+            $item->client;
 
         }
 

@@ -49,14 +49,13 @@ class MovementsController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request, $item_id)
+    public function store(Requests\CreateItemMovementRequest $request, $item_id)
     {
         //
 
-        $user = Auth::User();
         $movement = new Movement($request->all());
-        $movement->user_id = $user->id;
-        $item = $user->items()->whereId($item_id)->firstOrFail();
+        $movement->user_id = Auth::User()->id;
+        $item = Auth::User()->items()->whereId($item_id)->firstOrFail();
 
         // saving the movement will modify the item.
         $item->movements()->save($movement);
@@ -80,9 +79,15 @@ class MovementsController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show($item_id)
     {
+        $item = Auth::User()->items()->whereId($item_id)->firstOrFail();
 
+        return response()->json([
+            'result'=>'success',
+            'movements' => $item->movements,
+            'item'=>$item,
+        ], 200);
     }
 
     /**

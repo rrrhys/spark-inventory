@@ -13,6 +13,7 @@
     @else
         @include('spark::nav.guest')
     @endif
+    @include('overlay-alert')
 
     <!-- Main Content -->
     @yield('content')
@@ -22,6 +23,7 @@
 
     <!-- JavaScript Application -->
     <script src="/js/app.js"></script>
-        <script src="/js/inventory.js"></script>
+    <script src="/js/requires.js"></script>
+        <script src="/js/inventory-app.js"></script>
 </body>
 </html>

@@ -31,6 +31,7 @@ Route::group(['middleware' => 'auth'], function(){
 	Route::group(['prefix' => 'api/v1'], function(){
 		Route::get('dashboard', 'API\DashboardController@index');
 		Route::resource('items','API\ItemsController');
+		Route::resource('clients','API\ClientController');
 		Route::get('items/find/{string}', 'Api\ItemsController@find');
 
 		Route::resource('items.movements', 'API\MovementsController');

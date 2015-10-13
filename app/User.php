@@ -71,4 +71,8 @@ class User extends Model implements AuthorizableContract,
     public function movements(){
         return $this->hasMany('App\Movement');
     }
+
+    public function clients(){
+        return $this->hasMany('App\Client');
+    }
 }
