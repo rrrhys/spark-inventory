@@ -47,13 +47,13 @@
                         </tr>
                         <tr class="clickable"
                             v-repeat="item in items | orderBy sortKey reverse"
-                            v-on="click: redirectToURL('/items/' + item.id)"
                                 >
-                            <td
-                                    v-repeat="column in columns"
-                                    v-attr="title: column.id == 'created_at' ? item.created_at : ''">
-                                @{{ column.id == 'created_at' ? item.human_created_at : item[column.id] }}
-                            </td>
+                            <td> <a href="/items/@{{ item.id }}">@{{ item.item_name }}</td>
+                            <td><a href="/clients/@{{ item.client_id }}">@{{ item.client_name }}</a></td>
+                            <td>@{{ item.item_code }}</td>
+                            <td>@{{ item.quantity }}</td>
+                            <td>@{{ item.minimum_level }}</td>
+                            <td title="@{{ item.created_at }}">@{{ item.human_created_at }}</td>
                             <td>
                                 @include("crud.index-actions")
 

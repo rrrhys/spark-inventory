@@ -1,6 +1,11 @@
 @extends('spark::layouts.app')
 
 @section('content')
+
+
+    <script>
+
+    </script>
     <div class="container spark-screen" id="item_show">
         <input type="hidden" name="item_id" v-model="item_id" value="{{$item_id}}">
 
@@ -11,6 +16,9 @@
                 <div class="panel panel-default">
                     <div class="panel-heading" v-show="item">Information for @{{ item.item_name }}</div>
                     <div class="panel-body">
+                        <a href="{{ route('items.movements.create.direction',['items'=>$item_id,'direction'=>'in'])  }}">Check In</a> |
+                        <a href="{{ route('items.movements.create.direction',['items'=>$item_id,'direction'=>'out'])  }}">Check Out</a> |
+                        <a href="{{ route('items.movements.index',['items'=>$item_id])  }}">Movement Report</a>
                         <div class="row">
                             <div class="col-sm-5">
                                 <h4>Item details:</h4>
@@ -47,6 +55,13 @@
                                     </tr>
                                 </table>
 
+                            </div>
+
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-12">
+
+                                <div id="chart_div"></div>
                             </div>
                         </div>
                     </div>

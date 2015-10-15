@@ -18,6 +18,8 @@ class EloquentEventServiceProvider extends ServiceProvider
         Movement::created(function ($movement) {
             $i = $movement->item;
             $i->quantity += $movement->quantity;
+            $movement->result_quantity = $i->quantity;
+            $movement->save();
             $i->save();
         });
     }

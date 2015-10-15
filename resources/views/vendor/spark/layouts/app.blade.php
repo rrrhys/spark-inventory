@@ -22,8 +22,9 @@
     @include('spark::common.footer')
 
     <!-- JavaScript Application -->
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
     <script src="/js/app.js"></script>
     <script src="/js/requires.js"></script>
-        <script src="/js/inventory-app.js"></script>
+    <script src="/js/inventory-app.js"></script>
 </body>
 </html>

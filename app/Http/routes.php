@@ -26,7 +26,7 @@ Route::group(['middleware' => 'auth'], function(){
 	// Route::get('/items', 'ItemsController@index');
 	Route::resource('items','ItemsController');
 	Route::resource('items.movements', 'MovementsController');
-	Route::get('/items/{items}/movements/create/{direction}', 'MovementsController@create');
+	Route::get('/items/{items}/movements/create/{direction}', ['as'=>'items.movements.create.direction','uses'=>'MovementsController@create']);
 
 	Route::group(['prefix' => 'api/v1'], function(){
 		Route::get('dashboard', 'API\DashboardController@index');

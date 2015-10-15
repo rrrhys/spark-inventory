@@ -54,8 +54,10 @@
 												<th>Notes</th>
 											</tr>
 											<tr v-repeat="feed">
-												<td>@{{ item.item_name }}</td>
-												<td title="@{{ created_at }}">@{{human_created_at}}</td>
+												<td><a href="/items/@{{ item.id }}">@{{ item.item_name }}</a> </td>
+												<td title="@{{ created_at }}">
+													<a href="/items/@{{ item.id }}/movements/@{{ id }}">@{{human_created_at}}</a>
+												</td>
 												<td>@{{ quantity }}</td>
 												<td>@{{ description }}</td>
 											</tr>

@@ -18,12 +18,15 @@ $("#list-items").length > 0 ? new Vue({
         sortKey: 'item_name',
         reverse: false,
         columns: [
-            {id:'item_name', name:"Name", index: 0 },
-            {id:'client_name', name:"Client", index: 1 },
-            {id:'item_code', name:"Code", index: 2 },
-            {id:'quantity', name:"Quantity", index: 3 },
-            {id:'minimum_level', name:"Minimum Level", index: 4 },
-            {id:'created_at', name:"Created", index: 5 }]
+            {id:'item_name', name:"Name", click: function(a,b,c){
+                debugger;
+                this.redirectToURL('/items/' + item.id);
+            } },
+            {id:'client_name', name:"Client" },
+            {id:'item_code', name:"Code" },
+            {id:'quantity', name:"Quantity" },
+            {id:'minimum_level', name:"Minimum Level" },
+            {id:'created_at', name:"Created" }]
     },
 
     ready: function(){

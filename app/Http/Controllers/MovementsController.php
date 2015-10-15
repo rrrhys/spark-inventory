@@ -14,9 +14,12 @@ class MovementsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index($item_id)
     {
         //
+        return View('items.movements.index', [
+            'item_id'=>$item_id
+        ]);
     }
 
     /**
@@ -27,7 +30,6 @@ class MovementsController extends Controller
     public function create($item_id, $direction)
     {
         //
-        $user = Auth::User();
 
             return View('items.movements.create', [
                 'direction'=>$direction,
@@ -55,6 +57,7 @@ class MovementsController extends Controller
     public function show($id)
     {
         //
+        return view("items.movements.show", ['movement_id'=>$id]);
     }
 
     /**
