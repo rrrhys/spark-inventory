@@ -4220,7 +4220,11 @@ moment.tz.load(require('./data/packed/latest.json'));
 },{}],5:[function(require,module,exports){
 'use strict';
 
-google.load('visualization', '1', { packages: ['corechart', 'line'] });
+Vue.http.headers.common['X-CSRF-TOKEN'] = document.querySelector('#token').getAttribute('value');
+Vue.config.debug = true; // turn on debugging mode
+if (typeof google !== "undefined") {
+    google.load('visualization', '1', { packages: ['corechart', 'line'] });
+}
 var makeTableResponsive = function makeTableResponsive() {
     Vue.nextTick(function () {
 
@@ -4228,7 +4232,36 @@ var makeTableResponsive = function makeTableResponsive() {
     });
 };
 var states = ['Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming'];
-$(function () {});
+
+$(function () {
+
+    // authentication. Hi-jack form submission and submit using ajax.
+    // The ajax login will get an authenticated token to use.
+    $(".ajax-submit-for-token").on('submit', function (e) {
+        e.preventDefault();
+        var $that = $(this);
+        var formData = $that.serialize();
+        $.ajax({
+            url: $that.attr('action'),
+            data: formData,
+            dataType: 'JSON',
+            type: "POST",
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('#token').getAttribute('value')
+
+            },
+            success: function success(data) {
+                if (data.result == "success") {
+                    window.location = "/home";
+                }
+                debugger;
+            },
+            error: function error() {
+                debugger;
+            }
+        });
+    });
+});
 Vue.component('dashboard', {
     template: document.querySelector("#dashboard-template"),
     data: function data() {

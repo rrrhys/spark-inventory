@@ -1,4 +1,9 @@
-google.load('visualization', '1', {packages: ['corechart', 'line']});
+Vue.http.headers.common['X-CSRF-TOKEN'] = document.querySelector('#token').getAttribute('value');
+Vue.config.debug = true; // turn on debugging mode
+if(typeof google !== "undefined"){
+    google.load('visualization', '1', {packages: ['corechart', 'line']});
+
+}
 var makeTableResponsive = function(){
     Vue.nextTick(function(){
 
@@ -18,7 +23,37 @@ var states = [
     'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington',
     'West Virginia', 'Wisconsin', 'Wyoming'
 ];
+
+
 $(function() {
+
+    // authentication. Hi-jack form submission and submit using ajax.
+    // The ajax login will get an authenticated token to use.
+    $(".ajax-submit-for-token").on('submit', function(e){
+        e.preventDefault();
+        var $that = $(this);
+        var formData = $that.serialize();
+        $.ajax({
+            url :$that.attr('action'),
+            data: formData,
+            dataType: 'JSON',
+            type: "POST",
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('#token').getAttribute('value'),
+
+            },
+            success: function(data){
+                if(data.result == "success"){
+                    window.location = "/home";
+
+                }
+                debugger;
+            },
+            error: function(){
+                debugger;
+            }
+        })
+    })
 
 });
 Vue.component('dashboard', {
@@ -100,7 +135,7 @@ Vue.component('dashboard', {
 
                 for(var i = 0; i <response.data.length; i++){
                     response.data[i].name = response.data[i].item_name;
-                } 
+                }
 
                 var that = this;
                 $("#item-name-autocomplete").autocomplete({
