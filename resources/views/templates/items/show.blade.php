@@ -7,9 +7,9 @@
             <div class="panel panel-default">
                 <div class="panel-heading" v-show="item">Information for @{{ item.item_name }}</div>
                 <div class="panel-body">
-                    <a href="{{ route('items.movements.create.direction',['items'=>$item_id,'direction'=>'in'])  }}">Check In</a> |
-                    <a href="{{ route('items.movements.create.direction',['items'=>$item_id,'direction'=>'out'])  }}">Check Out</a> |
-                    <a href="{{ route('items.movements.index',['items'=>$item_id])  }}">Movement Report</a>
+                    <a href="/items/@{{ item_id }}/movements/create/in">Check In</a> |
+                    <a href="/items/@{{ item_id }}/movements/create/out">Check Out</a> |
+                    <a href="/items/@{{ item_id }}/movements/">Movement Report</a>
                     <div class="row">
                         <div class="col-sm-5">
                             <h4>Item details:</h4>
@@ -33,35 +33,19 @@
                             </table>
                         </div>
                         <div class="col-sm-7">
-                            <h4>Recent Movements:</h4>
-                            <table class="table">
-                                <tr>
-                                    <th>When</th>
-                                    <th>Quantity</th>
-                                    <th>Notes</th>
-                                </tr>
-                                <tr v-repeat="movements">
-                                    <td title="@{{ created_at }}">
-                                        @{{human_created_at}}
-                                    </td>
-                                    <td>@{{ quantity }}</td>
-                                    <td>@{{ description }}</td>
-                                </tr>
-                                <tr v-if="movements.length == 0">
-                                    <td colspan="42">No movements for this item</td>
-                                </tr>
-                                <tr>
-                                    <td colspan="42"><a href="/items/@{{ item.id }}/movements/create/in">Check in</a> | <a href="/items/@{{ item.id }}/movements/create/in">Check out</a></td>
-                                </tr>
-                            </table>
+                            <movements-recent passed_item_id="@{{ item_id }}" passed_item="@{{ item }}" v-if="item">
+
+                            </movements-recent>
 
                         </div>
 
                     </div>
                     <div class="row">
                         <div class="col-xs-12">
+                            <movements-chart>
 
-                            <div id="chart_div"></div>
+                            </movements-chart>
+
                         </div>
                     </div>
                 </div>

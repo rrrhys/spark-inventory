@@ -33,3 +33,15 @@
 
   color: #CF000F;
 }
+
+.form-block {
+  width: 100%;
+}
+ @import "node_modules/tablesaw/dist/bare/tablesaw.bare";
+@import "node_modules/jquery-autocomplete/jquery.autocomplete";
+
+@media (max-width: 39.9375em) {
+  .tablesaw-cell-content {
+    width: 67%;
+  }
+}

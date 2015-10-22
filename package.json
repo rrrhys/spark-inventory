@@ -8,6 +8,7 @@
     "jquery": "^2.1.4",
     "laravel-elixir": "^3.0.0",
     "laravel-spark": "^1.0.0",
-    "moment-timezone": "^0.4.1"
+    "moment-timezone": "^0.4.1",
+    "jquery-autocomplete": "1.2.1"
   }
 }

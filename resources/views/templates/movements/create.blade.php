@@ -56,22 +56,7 @@
                             </table>
                         </div>
                         <div class="col-sm-7">
-                            <h4>Recent Movements:</h4>
-                            <table class="table">
-                                <tr>
-                                    <th>When</th>
-                                    <th>Quantity</th>
-                                    <th>Notes</th>
-                                </tr>
-                                <tr v-repeat="movements">
-                                    <td title="@{{ created_at }}">@{{human_created_at}}</td>
-                                    <td>@{{ quantity }}</td>
-                                    <td>@{{ description }}</td>
-                                </tr>
-                                <tr v-if="movements.length == 0">
-                                    <td colspan="42">No movements for this item</td>
-                                </tr>
-                            </table>
+                            <movements-recent passed_item_id="@{{ item_id }}" passed_item="@{{ item }}" v-if="item"></movements-recent>
 
                         </div>
                     </div>

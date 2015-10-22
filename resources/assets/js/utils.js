@@ -39,7 +39,3 @@ window.httpErrorHandler = function(d,s,r){
         debugger;
     }
 }
-
-
-var abc = function(){
-}

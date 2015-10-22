@@ -1,4 +1,1097 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+/**
+ * @preserve jQuery Autocomplete plugin v1.2.1
+ * @homepage http://xdsoft.net/jqplugins/autocomplete/
+ * (c) 2014, Chupurnov Valeriy <chupurnov@gmail.com>
+ */
+(function ($) {
+	'use strict';
+	var	ARROWLEFT = 37,
+		ARROWRIGHT = 39,
+		ARROWUP = 38,
+		ARROWDOWN = 40,
+		TAB = 9,
+		CTRLKEY = 17,
+		SHIFTKEY = 16,
+		DEL = 46,
+		ENTER = 13,
+		ESC = 27,
+		BACKSPACE = 8,
+		AKEY = 65,
+		CKEY = 67,
+		VKEY = 86,
+		ZKEY = 90,
+		YKEY = 89,
+		defaultSetting = {},
+		currentInput = false,
+		ctrlDown = false,
+		shiftDown = false,
+		interval_for_visibility,
+		publics = {},
+		accent_map = {
+			'ẚ':'a','Á':'a','á':'a','À':'a','à':'a','Ă':'a','ă':'a','Ắ':'a','ắ':'a','Ằ':'a','ằ':'a','Ẵ':'a','ẵ':'a','Ẳ':'a',
+			'Ẫ':'a','ẫ':'a','Ẩ':'a','ẩ':'a','Ǎ':'a','ǎ':'a','Å':'a','å':'a','Ǻ':'a','ǻ':'a','Ä':'a','ä':'a','Ǟ':'a','ǟ':'a',
+			'Ã':'a','ã':'a','Ȧ':'a','ȧ':'a','Ǡ':'a','ǡ':'a','Ą':'a','ą':'a','Ā':'a','ā':'a','Ả':'a','ả':'a','Ȁ':'a','ȁ':'a',
+			'Ȃ':'a','ȃ':'a','Ạ':'a','ạ':'a','Ặ':'a','ặ':'a','Ậ':'a','ậ':'a','Ḁ':'a','ḁ':'a','Ⱥ':'a','ⱥ':'a','Ǽ':'a','ǽ':'a',
+			'Ǣ':'a','ǣ':'a','Ḃ':'b','ḃ':'b','Ḅ':'b','ḅ':'b','Ḇ':'b','ḇ':'b','Ƀ':'b','ƀ':'b','ᵬ':'b','Ɓ':'b','ɓ':'b','Ƃ':'b',
+			'ƃ':'b','Ć':'c','ć':'c','Ĉ':'c','ĉ':'c','Č':'c','č':'c','Ċ':'c','ċ':'c','Ç':'c','ç':'c','Ḉ':'c','ḉ':'c','Ȼ':'c',
+			'ȼ':'c','Ƈ':'c','ƈ':'c','ɕ':'c','Ď':'d','ď':'d','Ḋ':'d','ḋ':'d','Ḑ':'d','ḑ':'d','Ḍ':'d','ḍ':'d','Ḓ':'d','ḓ':'d',
+			'Ḏ':'d','ḏ':'d','Đ':'d','đ':'d','ᵭ':'d','Ɖ':'d','ɖ':'d','Ɗ':'d','ɗ':'d','Ƌ':'d','ƌ':'d','ȡ':'d','ð':'d','É':'e',
+			'Ə':'e','Ǝ':'e','ǝ':'e','é':'e','È':'e','è':'e','Ĕ':'e','ĕ':'e','Ê':'e','ê':'e','Ế':'e','ế':'e','Ề':'e','ề':'e',
+			'Ễ':'e','ễ':'e','Ể':'e','ể':'e','Ě':'e','ě':'e','Ë':'e','ë':'e','Ẽ':'e','ẽ':'e','Ė':'e','ė':'e','Ȩ':'e','ȩ':'e',
+			'Ḝ':'e','ḝ':'e','Ę':'e','ę':'e','Ē':'e','ē':'e','Ḗ':'e','ḗ':'e','Ḕ':'e','ḕ':'e','Ẻ':'e','ẻ':'e','Ȅ':'e','ȅ':'e',
+			'Ȇ':'e','ȇ':'e','Ẹ':'e','ẹ':'e','Ệ':'e','ệ':'e','Ḙ':'e','ḙ':'e','Ḛ':'e','ḛ':'e','Ɇ':'e','ɇ':'e','ɚ':'e','ɝ':'e',
+			'Ḟ':'f','ḟ':'f','ᵮ':'f','Ƒ':'f','ƒ':'f','Ǵ':'g','ǵ':'g','Ğ':'g','ğ':'g','Ĝ':'g','ĝ':'g','Ǧ':'g','ǧ':'g','Ġ':'g',
+			'ġ':'g','Ģ':'g','ģ':'g','Ḡ':'g','ḡ':'g','Ǥ':'g','ǥ':'g','Ɠ':'g','ɠ':'g','Ĥ':'h','ĥ':'h','Ȟ':'h','ȟ':'h','Ḧ':'h',
+			'ḧ':'h','Ḣ':'h','ḣ':'h','Ḩ':'h','ḩ':'h','Ḥ':'h','ḥ':'h','Ḫ':'h','ḫ':'h','H':'h','̱':'h','ẖ':'h','Ħ':'h','ħ':'h',
+			'Ⱨ':'h','ⱨ':'h','Í':'i','í':'i','Ì':'i','ì':'i','Ĭ':'i','ĭ':'i','Î':'i','î':'i','Ǐ':'i','ǐ':'i','Ï':'i','ï':'i',
+			'Ḯ':'i','ḯ':'i','Ĩ':'i','ĩ':'i','İ':'i','i':'i','Į':'i','į':'i','Ī':'i','ī':'i','Ỉ':'i','ỉ':'i','Ȉ':'i','ȉ':'i',
+			'Ȋ':'i','ȋ':'i','Ị':'i','ị':'i','Ḭ':'i','ḭ':'i','I':'i','ı':'i','Ɨ':'i','ɨ':'i','Ĵ':'j','ĵ':'j','J':'j','̌':'j',
+			'ǰ':'j','ȷ':'j','Ɉ':'j','ɉ':'j','ʝ':'j','ɟ':'j','ʄ':'j','Ḱ':'k','ḱ':'k','Ǩ':'k','ǩ':'k','Ķ':'k','ķ':'k','Ḳ':'k',
+			'ḳ':'k','Ḵ':'k','ḵ':'k','Ƙ':'k','ƙ':'k','Ⱪ':'k','ⱪ':'k','Ĺ':'a','ĺ':'l','Ľ':'l','ľ':'l','Ļ':'l','ļ':'l','Ḷ':'l',
+			'ḷ':'l','Ḹ':'l','ḹ':'l','Ḽ':'l','ḽ':'l','Ḻ':'l','ḻ':'l','Ł':'l','ł':'l','̣':'l','Ŀ':'l',
+			'ŀ':'l','Ƚ':'l','ƚ':'l','Ⱡ':'l','ⱡ':'l','Ɫ':'l','ɫ':'l','ɬ':'l','ɭ':'l','ȴ':'l','Ḿ':'m','ḿ':'m','Ṁ':'m','ṁ':'m',
+			'Ṃ':'m','ṃ':'m','ɱ':'m','Ń':'n','ń':'n','Ǹ':'n','ǹ':'n','Ň':'n','ň':'n','Ñ':'n','ñ':'n','Ṅ':'n','ṅ':'n','Ņ':'n',
+			'ņ':'n','Ṇ':'n','ṇ':'n','Ṋ':'n','ṋ':'n','Ṉ':'n','ṉ':'n','Ɲ':'n','ɲ':'n','Ƞ':'n','ƞ':'n','ɳ':'n','ȵ':'n','N':'n',
+			'̈':'n','n':'n','Ó':'o','ó':'o','Ò':'o','ò':'o','Ŏ':'o','ŏ':'o','Ô':'o','ô':'o','Ố':'o','ố':'o','Ồ':'o',
+			'ồ':'o','Ỗ':'o','ỗ':'o','Ổ':'o','ổ':'o','Ǒ':'o','ǒ':'o','Ö':'o','ö':'o','Ȫ':'o','ȫ':'o','Ő':'o','ő':'o','Õ':'o',
+			'õ':'o','Ṍ':'o','ṍ':'o','Ṏ':'o','ṏ':'o','Ȭ':'o','ȭ':'o','Ȯ':'o','ȯ':'o','Ȱ':'o','ȱ':'o','Ø':'o','ø':'o','Ǿ':'o',
+			'ǿ':'o','Ǫ':'o','ǫ':'o','Ǭ':'o','ǭ':'o','Ō':'o','ō':'o','Ṓ':'o','ṓ':'o','Ṑ':'o','ṑ':'o','Ỏ':'o','ỏ':'o','Ȍ':'o',
+			'ȍ':'o','Ȏ':'o','ȏ':'o','Ơ':'o','ơ':'o','Ớ':'o','ớ':'o','Ờ':'o','ờ':'o','Ỡ':'o','ỡ':'o','Ở':'o','ở':'o','Ợ':'o',
+			'ợ':'o','Ọ':'o','ọ':'o','Ộ':'o','ộ':'o','Ɵ':'o','ɵ':'o','Ṕ':'p','ṕ':'p','Ṗ':'p','ṗ':'p','Ᵽ':'p','Ƥ':'p','ƥ':'p',
+			'P':'p','̃':'p','p':'p','ʠ':'q','Ɋ':'q','ɋ':'q','Ŕ':'r','ŕ':'r','Ř':'r','ř':'r','Ṙ':'r','ṙ':'r','Ŗ':'r',
+			'ŗ':'r','Ȑ':'r','ȑ':'r','Ȓ':'r','ȓ':'r','Ṛ':'r','ṛ':'r','Ṝ':'r','ṝ':'r','Ṟ':'r','ṟ':'r','Ɍ':'r','ɍ':'r','ᵲ':'r',
+			'ɼ':'r','Ɽ':'r','ɽ':'r','ɾ':'r','ᵳ':'r','ß':'s','Ś':'s','ś':'s','Ṥ':'s','ṥ':'s','Ŝ':'s','ŝ':'s','Š':'s','š':'s',
+			'Ṧ':'s','ṧ':'s','Ṡ':'s','ṡ':'s','ẛ':'s','Ş':'s','ş':'s','Ṣ':'s','ṣ':'s','Ṩ':'s','ṩ':'s','Ș':'s','ș':'s','ʂ':'s',
+			'S':'s','̩':'s','s':'s','Þ':'t','þ':'t','Ť':'t','ť':'t','T':'t','ẗ':'t','Ṫ':'t','ṫ':'t','Ţ':'t','ţ':'t','Ṭ':'t',
+			'ṭ':'t','Ț':'t','ț':'t','Ṱ':'t','ṱ':'t','Ṯ':'t','ṯ':'t','Ŧ':'t','ŧ':'t','Ⱦ':'t','ⱦ':'t','ᵵ':'t',
+			'ƫ':'t','Ƭ':'t','ƭ':'t','Ʈ':'t','ʈ':'t','ȶ':'t','Ú':'u','ú':'u','Ù':'u','ù':'u','Ŭ':'u','ŭ':'u','Û':'u','û':'u',
+			'Ǔ':'u','ǔ':'u','Ů':'u','ů':'u','Ü':'u','ü':'u','Ǘ':'u','ǘ':'u','Ǜ':'u','ǜ':'u','Ǚ':'u','ǚ':'u','Ǖ':'u','ǖ':'u',
+			'Ű':'u','ű':'u','Ũ':'u','ũ':'u','Ṹ':'u','ṹ':'u','Ų':'u','ų':'u','Ū':'u','ū':'u','Ṻ':'u','ṻ':'u','Ủ':'u','ủ':'u',
+			'Ȕ':'u','ȕ':'u','Ȗ':'u','ȗ':'u','Ư':'u','ư':'u','Ứ':'u','ứ':'u','Ừ':'u','ừ':'u','Ữ':'u','ữ':'u','Ử':'u','ử':'u',
+			'Ự':'u','ự':'u','Ụ':'u','ụ':'u','Ṳ':'u','ṳ':'u','Ṷ':'u','ṷ':'u','Ṵ':'u','ṵ':'u','Ʉ':'u','ʉ':'u','Ṽ':'v','ṽ':'v',
+			'Ṿ':'v','ṿ':'v','Ʋ':'v','ʋ':'v','Ẃ':'w','ẃ':'w','Ẁ':'w','ẁ':'w','Ŵ':'w','ŵ':'w','W':'w','̊':'w','ẘ':'w','Ẅ':'w',
+			'ẅ':'w','Ẇ':'w','ẇ':'w','Ẉ':'w','ẉ':'w','Ẍ':'x','ẍ':'x','Ẋ':'x','ẋ':'x','Ý':'y','ý':'y','Ỳ':'y','ỳ':'y','Ŷ':'y',
+			'ŷ':'y','Y':'y','ẙ':'y','Ÿ':'y','ÿ':'y','Ỹ':'y','ỹ':'y','Ẏ':'y','ẏ':'y','Ȳ':'y','ȳ':'y','Ỷ':'y','ỷ':'y',
+			'Ỵ':'y','ỵ':'y','ʏ':'y','Ɏ':'y','ɏ':'y','Ƴ':'y','ƴ':'y','Ź':'z','ź':'z','Ẑ':'z','ẑ':'z','Ž':'z','ž':'z','Ż':'z',
+			'ż':'z','Ẓ':'z','ẓ':'z','Ẕ':'z','ẕ':'z','Ƶ':'z','ƶ':'z','Ȥ':'z','ȥ':'z','ʐ':'z','ʑ':'z','Ⱬ':'z','ⱬ':'z','Ǯ':'z',
+			'ǯ':'z','ƺ':'z','２':'2','６':'6','Ｂ':'B','Ｆ':'F','Ｊ':'J','Ｎ':'N','Ｒ':'R','Ｖ':'V','Ｚ':'Z','ｂ':'b','ｆ':'f','ｊ':'j',
+			'ｎ':'n','ｒ':'r','ｖ':'v','ｚ':'z','１':'1','５':'5','９':'9','Ａ':'A','Ｅ':'E','Ｉ':'I','Ｍ':'M','Ｑ':'Q','Ｕ':'U','Ｙ':'Y',
+			'ａ':'a','ｅ':'e','ｉ':'i','ｍ':'m','ｑ':'q','ｕ':'u','ｙ':'y','０':'0','４':'4','８':'8','Ｄ':'D','Ｈ':'H','Ｌ':'L','Ｐ':'P',
+			'Ｔ':'T','Ｘ':'X','ｄ':'d','ｈ':'h','ｌ':'l','ｐ':'p','ｔ':'t','ｘ':'x','３':'3','７':'7','Ｃ':'C','Ｇ':'G','Ｋ':'K','Ｏ':'O',
+			'Ｓ':'S','Ｗ':'W','ｃ':'c','ｇ':'g','ｋ':'k','ｏ':'o','ｓ':'s','ｗ':'w','ẳ':'a','Â':'a','â':'a','Ấ':'a','ấ':'a','Ầ':'a','ầ':'a'
+		};
+
+	if (window.getComputedStyle === undefined) {
+		window.getComputedStyle = (function () {
+			function getPixelSize(element, style, property, fontSize) {
+				var	sizeWithSuffix = style[property],
+					size = parseFloat(sizeWithSuffix),
+					suffix = sizeWithSuffix.split(/\d/)[0],
+					rootSize;
+
+				fontSize = fontSize !== null ? fontSize : /%|em/.test(suffix) && element.parentElement ? getPixelSize(element.parentElement, element.parentElement.currentStyle, 'fontSize', null) : 16;
+				rootSize = property === 'fontSize' ? fontSize : /width/i.test(property) ? element.clientWidth : element.clientHeight;
+
+				return (suffix === 'em') ? size * fontSize : (suffix === 'in') ? size * 96 : (suffix === 'pt') ? size * 96 / 72 : (suffix === '%') ? size / 100 * rootSize : size;
+			}
+
+			function setShortStyleProperty(style, property) {
+				var	borderSuffix = property === 'border' ? 'Width' : '',
+					t = property + 'Top' + borderSuffix,
+					r = property + 'Right' + borderSuffix,
+					b = property + 'Bottom' + borderSuffix,
+					l = property + 'Left' + borderSuffix;
+
+				style[property] = (style[t] === style[r] === style[b] === style[l] ? [style[t]]
+					: style[t] === style[b] && style[l] === style[r] ? [style[t], style[r]]
+						: style[l] === style[r] ? [style[t], style[r], style[b]]
+							: [style[t], style[r], style[b], style[l]]).join(' ');
+			}
+
+			function CSSStyleDeclaration(element) {
+				var	currentStyle = element.currentStyle,
+					style = this,
+					property,
+					fontSize = getPixelSize(element, currentStyle, 'fontSize', null);
+				
+				for (property in currentStyle) {
+					if (currentStyle.hasOwnProperty(property)) {
+						if (/width|height|margin.|padding.|border.+W/.test(property) && style[property] !== 'auto') {
+							style[property] = getPixelSize(element, currentStyle, property, fontSize) + 'px';
+						} else if (property === 'styleFloat') {
+							style.float = currentStyle[property];
+						} else {
+							style[property] = currentStyle[property];
+						}
+					}
+				}
+
+				setShortStyleProperty(style, 'margin');
+				setShortStyleProperty(style, 'padding');
+				setShortStyleProperty(style, 'border');
+
+				style.fontSize = fontSize + 'px';
+
+				return style;
+			}
+
+			CSSStyleDeclaration.prototype = {
+				constructor: CSSStyleDeclaration,
+				getPropertyPriority: function () {},
+				getPropertyValue: function (prop) {
+					return this[prop] || '';
+				},
+				item: function () {},
+				removeProperty: function () {},
+				setProperty: function () {},
+				getPropertyCSSValue: function () {}
+			};
+
+			function getComputedStyle(element) {
+				return new CSSStyleDeclaration(element);
+			}
+
+			return getComputedStyle;
+		}(this));
+	}
+
+
+	$(document)
+		.on('keydown.xdsoftctrl', function (e) {
+			if (e.keyCode === CTRLKEY) {
+				ctrlDown = true;
+			}
+			if (e.keyCode === SHIFTKEY) {
+				ctrlDown = true;
+			}
+		})
+		.on('keyup.xdsoftctrl', function (e) {
+			if (e.keyCode === CTRLKEY) {
+				ctrlDown = false;
+			}
+			if (e.keyCode === SHIFTKEY) {
+				ctrlDown = false;
+			}
+		});
+	
+	function accentReplace (s) {
+		if (!s) { return ''; }
+		var ret = '',i;
+		for (i=0; i < s.length; i+=1) {
+			ret += accent_map[s.charAt(i)] || s.charAt(i);
+		}
+		return ret;
+	}
+	
+	function escapeRegExp (str) {
+		return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+	}
+	
+	function getCaretPosition(input) {
+		if (!input) {
+			return;
+		}
+		if (input.selectionStart) {
+			return input.selectionStart;
+		}
+		if (document.selection) {
+			input.focus();
+			var sel = document.selection.createRange(),
+				selLen = document.selection.createRange().text.length;
+			sel.moveStart('character', -input.value.length);
+			return sel.text.length - selLen;
+		}
+	}
+
+	function setCaretPosition(input, pos) {
+		if (input.setSelectionRange) {
+			input.focus();
+			input.setSelectionRange(pos, pos);
+		} else if (input.createTextRange) {
+			var range = input.createTextRange();
+			range.collapse(true);
+			range.moveEnd('character', pos);
+			range.moveStart('character', pos);
+			range.select();
+		}
+	}
+
+	function isset(value) {
+		return value !== undefined;
+	}
+
+	function safe_call(callback, args, callback2, defaultValue) {
+		if (isset(callback) && !$.isArray(callback)) {
+			return $.isFunction(callback) ? callback.apply(this,args):defaultValue;
+		}
+		if(isset(callback2)) {
+			return safe_call.call(this,callback2,args);
+		}
+		return defaultValue;
+	};
+
+	function __safe( callbackName,source,args,defaultValue ){
+		var undefinedVar;
+		return safe_call.call( this, (isset(this.source[source])&&this.source[source].hasOwnProperty(callbackName))?this.source[source][callbackName]:undefinedVar,args, function(){
+			return safe_call.call(this,
+					isset(this[callbackName][source])?
+						this[callbackName][source]:(
+							isset(this[callbackName][0])?
+								this[callbackName][0]:(
+									this.hasOwnProperty(callbackName)?
+										this[callbackName]:
+										undefinedVar
+								)
+						),
+					args,
+					defaultSetting[callbackName][source]||defaultSetting[callbackName][0]||defaultSetting[callbackName],
+					defaultValue
+			);
+		},defaultValue);
+	};
+
+	function __get( property,source ){
+		if(!isset(source))
+			source = 0;
+		
+		if( $.isArray(this.source) && isset(this.source[source]) && isset(this.source[source][property]))
+			return this.source[source][property];
+			
+		if( isset(this[property]) ){
+			if( $.isArray(this[property]) ){
+				if( isset(this[property][source]) )
+					return this[property][source];
+				if( isset(this[property][0]) )
+					return this[property][0];
+				return null;
+			}
+			return this[property];
+		}
+		
+		return null;
+	};
+
+	function loadRemote( url,sourceObject,done,debug ){
+		$.ajax($.extend(true,{
+			url : url,
+			type  : 'GET' ,
+			async:true,
+			cache :false,
+			dataType : 'json'
+		 },sourceObject.ajax))
+		 
+		 .done(function( data ){
+			done&&done.apply(this,$.makeArray(arguments));
+		 })
+		 
+		 .fail(function( jqXHR, textStatus ){
+			if( debug )
+				console.log("Request failed: " + textStatus);
+		 });
+	}
+
+
+	function findRight( data,query ){
+		var right = false,source;
+		
+		for (source = 0;source < data.length;source += 1) {
+			if( right = __safe.call(this,"findRight",source,[data[source],query,source]) ){
+				return {right:right,source:source};
+			}
+		}
+		
+		return false;
+	}
+
+	function processData( data,query ){
+		var source;
+		preparseData
+			.call( this,data,query );
+		
+		for (source = 0;source < data.length;source += 1) {
+			data[source] = __safe.call(this,
+				'filter',
+				source,
+				[data[source], query, source],
+				data[source]
+			);
+		}
+	};
+
+
+	function collectData( query,datasource,callback ){
+		var options = this,source;
+		
+		if( $.isFunction(options.source) ){
+				options.source.apply(options,[query,function(items){
+					datasource = [items];
+					safe_call.call(options,callback,[query]);
+				},datasource,0]);
+		}else{
+			for (source = 0;source < options.source.length;source += 1) {
+				if ($.isArray(options.source[source])) {
+					datasource[source] = options.source[source];
+				} else if ($.isFunction(options.source[source])) {
+					options.source[source].apply(options,[query,function(items){
+						if (!datasource[source]) {
+							datasource[source] = [];
+						}
+							
+						if (items && $.isArray(items)) {
+							datasource[source] = datasource[source].concat(items);
+						}
+							
+						safe_call.call(options,callback,[query]);
+					}, datasource,source]);
+				} else {
+					switch (options.source[source].type) {
+						case 'remote':
+							if (isset(options.source[source].url)) {
+								if (!isset(options.source[source].minLength) || query.length >= options.source[source].minLength){
+									var url = __safe.call(options,'replace',source,[options.source[source].url,query],'');
+									if (!datasource[source]) {
+										datasource[source] = [];
+									}
+									(function (source) {
+										loadRemote(url,options.source[source], function(resp){
+											datasource[source] = resp;
+											safe_call.call(options,callback,[query]);
+										},options.debug);
+									}(source));
+								}
+							}
+						break;
+						default:
+							if( isset(options.source[source]['data']) ){
+								datasource[source] = options.source[source]['data'];
+							}else{
+								datasource[source] = options.source[source];
+							}
+					}
+				}
+			}
+		}
+		safe_call.call(options,callback,[query]);
+	};
+
+	function preparseData( data,query ){
+		for( var source=0;source<data.length;source++ ){
+			data[source] = __safe.call(this,
+				'preparse',
+				source,
+				[data[source],query],
+				data[source]
+			);
+		}
+	};
+
+	function renderData( data,query ){
+		var  source, i, $div, $divs = [];
+		
+		for (source = 0;source < data.length;source += 1) {
+			for (i = 0;i < data[source].length;i += 1) {
+				if( $divs.length>=this.limit )
+					break;
+					
+				$div = $(__safe.call(this,
+					'render',source,
+					[data[source][i],source,i,query],
+					''
+				));
+				
+				$div.data('source',source);
+				$div.data('pid',i);
+				$div.data('item',data[source][i]);
+				
+				$divs.push($div);
+			}
+		}
+		
+		return $divs;
+	};
+
+	function getItem( $div,dataset ){
+		if( isset($div.data('source')) && 
+			isset($div.data('pid')) && 
+			isset(dataset[$div.data('source')]) && 
+			isset(dataset[$div.data('source')][$div.data('pid')]) 
+		){
+			return dataset[$div.data('source')][$div.data('pid')]
+		}
+		return false;
+	};
+
+	function getValue( $div,dataset ){
+		var item = getItem($div,dataset);
+		
+		if( item ){
+			return __safe.call(this,
+				'getValue',$div.data('source'),
+				[item,$div.data('source')]
+			);
+		}else{
+			if( isset($div.data('value')) ){
+				return decodeURIComponent($div.data('value'));
+			}else{
+				return $div.html();
+			}
+		}
+	};
+
+	defaultSetting = {
+		valueKey: 'value',
+		titleKey: 'title',
+		highlight: true,
+
+		showHint: true,
+
+		dropdownWidth: '100%',
+		dropdownStyle: {},
+		itemStyle: {},
+		hintStyle: false,
+		style: false,
+
+		debug: true,
+		openOnFocus: true,
+		closeOnBlur: true,
+
+		autoselect: false,
+		
+		accents: true,
+		replaceAccentsForRemote: true,
+		
+		limit: 20,
+		visibleLimit: 20,
+		visibleHeight: 0,
+		defaultHeightItem: 30,
+
+		timeoutUpdate: 10,
+
+		get: function (property, source) {
+			return __get.call(this,property,source);
+		},
+		
+		replace: [
+			function (url, query) {
+				if (this.replaceAccentsForRemote) {
+					query = accentReplace(query);
+				}
+				return url.replace('%QUERY%',encodeURIComponent(query));
+			}
+		],
+		
+		equal:function( value,query ){
+			return query.toLowerCase()==value.substr(0,query.length).toLowerCase();
+		},
+		
+		findRight:[
+			function(items,query,source){
+				var results = [],value = '',i;
+				
+				for (i = 0;i < items.length;i += 1) {
+					value = __safe.call(this,'getValue',source,[items[i],source]);
+					if( __safe.call(this,'equal',source,[value,query,source],false) ){
+						return items[i];
+					}
+				}
+				
+				return false;
+			}
+		],
+		
+		valid:[
+			function (value, query) {
+				if (this.accents) {
+					value = accentReplace(value);
+					query = accentReplace(query);
+				}
+				return value.toLowerCase().indexOf(query.toLowerCase())!=-1;
+				
+			}
+		],
+		
+		filter:[
+			function (items, query, source) {
+				var results = [], value = '',i;
+				for (i = 0;i < items.length;i += 1) {
+					value = isset(items[i][this.get('valueKey', source)]) ? items[i][this.get('valueKey', source)] : items[i].toString();
+					if (__safe.call(this, 'valid', source, [value, query])) {
+						results.push(items[i]); 
+					}
+				}
+				return results;
+			}
+		],
+		
+		preparse:function(items){
+			return items;
+		},
+		
+		getValue:[
+			function ( item,source ){
+				return isset(item[this.get('valueKey',source)])?item[this.get('valueKey',source)]:item.toString();
+			}
+		],
+		
+		getTitle:[
+			function ( item,source ){
+				return isset(item[this.get('titleKey',source)])?item[this.get('titleKey',source)]:item.toString();
+			}
+		],
+		
+		render:[
+			function (item, source, pid, query) {
+				var value = isset(item[this.get('valueKey', source)]) ? item[this.get('valueKey', source)] : item.toString(),
+					title = (isset(item[this.get('titleKey', source)]) ? item[this.get('titleKey', source)] : value) + '',
+					_value = '',
+					_query = '',
+					_title = '',
+					hilite_hints = '',
+					highlighted = '',
+					c, h, i,
+					spos = 0;
+					
+				if (this.highlight) {
+					if (!this.accents) {
+						title = title.replace(new RegExp('('+escapeRegExp(query)+')','i'),'<b>$1</b>');
+					}else{
+						_title = accentReplace(title).toLowerCase().replace(/[<>]+/g, ''),
+						_query = accentReplace(query).toLowerCase().replace(/[<>]+/g, '');
+						
+						hilite_hints = _title.replace(new RegExp(escapeRegExp(_query), 'g'), '<'+_query+'>');
+						for (i=0;i < hilite_hints.length;i += 1) {
+							c = title.charAt(spos);
+							h = hilite_hints.charAt(i);
+							if (h === '<') {
+								highlighted += '<b>';
+							} else if (h === '>') {
+								highlighted += '</b>';
+							} else {
+								spos += 1;
+								highlighted += c;
+							}
+						}
+						title = highlighted;
+					}
+				}
+					
+				return '<div '+(value==query?'class="active"':'')+' data-value="'+encodeURIComponent(value)+'">'
+							+title+
+						'</div>';
+			}
+		],
+		
+		source:[]
+	};
+	function init( that,options ){
+		if( $(that).hasClass('xdsoft_input') )
+				return;
+		
+		var $box = $('<div class="xdsoft_autocomplete"></div>'),
+			$dropdown = $('<div class="xdsoft_autocomplete_dropdown"></div>'),
+			$hint = $('<input readonly class="xdsoft_autocomplete_hint"/>'),
+			$input = $(that),
+			timer1 = 0,
+			dataset = [],
+			iOpen	= false,
+			value = '',
+			currentValue = '',
+			currentSelect = '',
+			active = null,
+			pos = 0;
+		
+		//it can be used to access settings
+		$input.data('autocomplete_options', options);
+		
+		$dropdown
+			.on('mousedown', function(e) {
+				e.preventDefault();
+				e.stopPropagation();
+			})
+			.on('updatescroll.xdsoft', function() {
+				var _act = $dropdown.find('.active');
+				if (!_act.length) {
+					return;
+				}
+				
+				var top = _act.position().top,
+					actHght = _act.outerHeight(true),
+					scrlTop = $dropdown.scrollTop(),
+					hght = $dropdown.height();
+					
+				if (top <0) {
+					$dropdown.scrollTop(scrlTop-Math.abs(top));
+				} else if (top+actHght>hght) {
+					$dropdown.scrollTop(scrlTop+top+actHght-hght);
+				}
+			});
+		
+		$box
+			.css({
+				'display':$input.css('display'),
+				'width':$input.css('width')
+			});
+		
+		if( options.style )
+			$box.css(options.style);
+			
+		$input
+			.addClass('xdsoft_input')
+			.attr('autocomplete','off');
+		
+		$dropdown
+			.on('mousemove','div',function(){
+				if( $(this).hasClass('active') )
+					return true;
+				$dropdown.find('div').removeClass('active');
+				$(this).addClass('active');
+			})
+			.on('mousedown','div',function(){
+				$dropdown.find('div').removeClass('active');
+				$(this).addClass('active');
+				$input.trigger('pick.xdsoft');
+			})
+
+		function manageData(){
+			if( $input.val()!=currentValue ){
+				currentValue = $input.val();
+			}else
+				return;
+
+			collectData.call(options,currentValue,dataset,function( query ){
+				if( query != currentValue )
+					return;
+				var right;	
+				processData.call(options,dataset,query);
+
+				$input.trigger('updateContent.xdsoft');
+
+				if( options.showHint && currentValue.length && currentValue.length<=$input.prop('size') && (right = findRight.call(options,dataset,currentValue))  ){
+					var title 	=  __safe.call(options,'getTitle',right.source,[right.right,right.source]);
+					title = /*'<span>'+*/query+/*'</span>'+*/title.substr(query.length);
+					$hint.val( title );
+				}else{
+					$hint.val('');
+				}
+			});
+
+			return;
+		}
+		function manageKey (event) {
+			var key = event.which,right;
+			
+			switch( key ){
+				case AKEY: case CKEY: case VKEY: case ZKEY: case YKEY:
+					if (event.shiftKey || event.ctrlKey) {
+						return true;
+					}
+				break;
+				case SHIFTKEY:	
+				case CTRLKEY:
+					return true;
+				break;
+				case ARROWRIGHT:	
+				case ARROWLEFT:
+					if (ctrlDown || shiftDown || event.shiftKey || event.ctrlKey) {
+						return true;
+					}
+					value = $input.val();
+					pos = getCaretPosition($input[0]);
+					if (key === ARROWRIGHT && pos === value.length) {
+						if (right = findRight.call(options, dataset, value)){
+							$input.trigger('pick.xdsoft', [
+								__safe.call(options,
+									'getValue', right.source,
+									[right.right, right.source]
+								)
+							]);
+						} else {
+							$input.trigger('pick.xdsoft');
+						}
+						event.preventDefault();
+						return false;
+					}
+					return true;
+				case TAB:
+				return true;
+				case ENTER:
+					if (iOpen) {
+						$input.trigger('pick.xdsoft');
+						event.preventDefault();
+						return false;
+					} else {
+						return true;
+					}
+				break;
+				case ESC:
+					$input
+						.val(currentValue)
+						.trigger('close.xdsoft');
+					event.preventDefault();
+					return false;
+				case ARROWDOWN:
+				case ARROWUP:
+					if (!iOpen) {
+						$input.trigger('open.xdsoft');
+						$input.trigger('updateContent.xdsoft');
+						event.preventDefault();
+						return false;
+					}
+					
+					active = $dropdown.find('div.active');
+					
+					var next = key==ARROWDOWN?'next':'prev', timepick = true;
+					
+					if( active.length ){
+						active.removeClass('active');
+						if( active[next]().length ){
+							active[next]().addClass('active');
+						}else{
+							$input.val(currentValue);
+							timepick = false;
+						}
+					}else{
+						$dropdown.children().eq(key==ARROWDOWN?0:-1).addClass('active');
+					}
+					
+					if( timepick ){
+						$input.trigger('timepick.xdsoft');
+					}
+					
+					$dropdown
+						.trigger('updatescroll.xdsoft');
+					
+					event.preventDefault();
+					return false;	
+			}
+			return;
+		}
+		
+		$input
+			.data('xdsoft_autocomplete',dataset)
+			.after($box)
+			.on('pick.xdsoft', function( event,_value ){
+
+				$input
+					.trigger('timepick.xdsoft',_value)
+				
+				currentSelect = currentValue = $input.val();
+				
+				$input
+					.trigger('close.xdsoft');
+				
+				currentInput = false;
+				
+				active = $dropdown.find('div.active').eq(0);
+							
+				if( !active.length )
+					active = $dropdown.children().first();
+					
+				$input.trigger('selected.xdsoft',[getItem(active,dataset)]);
+			})
+			.on('timepick.xdsoft', function( event,_value ){
+				active = $dropdown.find('div.active');
+							
+				if( !active.length )
+					active = $dropdown.children().first();
+				
+				if( active.length ){
+					if( !isset(_value) ){
+						$input.val(getValue.call(options,active,dataset));
+					}else{
+						$input.val(_value);
+					}
+					$input.trigger('autocompleted.xdsoft',[getItem(active,dataset)]);
+					$hint.val('');
+					setCaretPosition($input[0],$input.val().length);
+				}
+			})
+			.on('keydown.xdsoft keypress.xdsoft input.xdsoft cut.xdsoft paste.xdsoft', function( event ){
+				var ret = manageKey(event);
+				
+				if (ret === false || ret === true) {
+					return ret;
+				}
+				
+				if (!iOpen) {
+					$input.trigger('open.xdsoft');
+				}
+				
+				setTimeout(function(){
+					manageData();
+				},1);
+				
+				manageData();
+			});
+		
+		currentValue = $input.val();
+		
+		collectData.call(options, $input.val(),dataset,function( query ){
+			processData.call(options,dataset,query);
+		});
+		
+		if( options.openOnFocus ){
+			$input.on('focusin.xdsoft',function(){
+				$input.trigger('open.xdsoft');
+				$input.trigger('updateContent.xdsoft');
+			});
+		}
+		
+		if( options.closeOnBlur )
+			$input.on('focusout.xdsoft',function(){
+				$input.trigger('close.xdsoft');
+			});
+			
+		$box
+			.append($input)
+			.append($dropdown);
+
+
+		var olderBackground = false,
+			timerUpdate = 0;
+		
+		$input
+			.on('updateHelperPosition.xdsoft',function(){
+				clearTimeout(timerUpdate);
+				timerUpdate = setTimeout(function(){
+					$box.css({
+						'display':$input.css('display'),
+						'width':$input.css('width')
+					});
+					$dropdown.css($.extend(true,{
+						left:$input.position().left,
+						top:$input.position().top+parseInt($input.css('marginTop'))+parseInt($input[0].offsetHeight),
+						marginLeft:$input.css('marginLeft'),
+						marginRight:$input.css('marginRight'),
+						width:options.dropdownWidth=='100%'?$input[0].offsetWidth:options.dropdownWidth
+					},options.dropdownStyle));
+					
+					if( options.showHint ){
+						var style = getComputedStyle($input[0], "");
+						
+						$hint[0].style.cssText = style.cssText;
+						
+						$hint.css({
+							'box-sizing':style.boxSizing,
+							borderStyle:'solid',
+							borderCollapse:style.borderCollapse,
+							borderLeftWidth:style.borderLeftWidth,
+							borderRightWidth:style.borderRightWidth,
+							borderTopWidth:style.borderTopWidth,
+							borderBottomWidth:style.borderBottomWidth,
+							paddingBottom:style.paddingBottom,
+							marginBottom:style.marginBottom,
+							paddingTop:style.paddingTop,
+							marginTop:style.marginTop,
+							paddingLeft:style.paddingLeft,
+							marginLeft:style.marginLeft,
+							paddingRight:style.paddingRight,
+							marginRight:style.marginRight,
+							maxHeight:style.maxHeight,
+							minHeight:style.minHeight,
+							maxWidth:style.maxWidth,
+							minWidth:style.minWidth,
+							width:style.width,
+							letterSpacing:style.letterSpacing,
+							lineHeight:style.lineHeight,
+							outlineWidth:style.outlineWidth,
+							fontFamily:style.fontFamily,
+							fontVariant:style.fontVariant,
+							fontStyle:style.fontStyle,
+							fontSize:style.fontSize,
+							fontWeight:style.fontWeight,
+							flex:style.flex,
+							justifyContent:style.justifyContent,
+							borderRadius:style.borderRadius,
+							'-webkit-box-shadow':'none',
+							'box-shadow':'none'
+						});
+						
+						$input.css('font-size',style.fontSize)// fix bug with em font size
+						
+						$hint.innerHeight($input.innerHeight());
+						
+						$hint.css($.extend(true,{
+							position:'absolute',
+							zIndex:'1',
+							borderColor:'transparent',
+							outlineColor:'transparent',
+							left:$input.position().left,
+							top:$input.position().top,
+							background:$input.css('background')
+						},options.hintStyle));
+						
+						if( olderBackground!==false ){
+							$hint.css('background',olderBackground);
+						}else{
+							olderBackground = $input.css('background');
+						}
+						
+						$input
+							.css('background','transparent')
+						$box
+							.append($hint);
+					}
+				},options.timeoutUpdate||1);
+			});
+		
+		if ($input.is(':visible')) {
+			$input
+				.trigger('updateHelperPosition.xdsoft');
+		} else {
+			interval_for_visibility = setInterval(function () {
+				if ($input.is(':visible')) {
+					$input
+						.trigger('updateHelperPosition.xdsoft');
+					clearInterval(interval_for_visibility);
+				}
+			},100);
+		}
+		
+		$(window).on('resize',function () {
+			$box.css({
+				'width':'auto'
+			});
+			$input
+				.trigger('updateHelperPosition.xdsoft');
+		})
+		
+		$input	
+			.on('close.xdsoft',function(){
+				if( !iOpen )
+					return;
+					
+				$dropdown
+					.hide();
+				
+				$hint
+					.empty();	
+
+				if( !options.autoselect )
+					$input.val(currentValue);
+					
+				iOpen = false;
+
+				currentInput = false;
+			})
+			
+			.on('updateContent.xdsoft',function(){
+				var out = renderData.call(options,dataset,$input.val()),
+					hght = 10;
+				
+				if (out.length) {
+					$dropdown.show()
+				} else {
+					$dropdown.hide()
+					return;
+				}
+
+				$(out).each(function(){
+					this.css($.extend(true,{
+						paddingLeft:$input.css('paddingLeft'),
+						paddingRight:$input.css('paddingRight')
+					},options.itemStyle));
+				});
+
+				$dropdown
+					.html(out);
+					
+				if (options.visibleHeight){
+					hght = options.visibleHeight;
+				} else {
+					hght = options.visibleLimit * ((out[0] ? out[0].outerHeight(true) : 0) || options.defaultHeightItem) + 5;
+				}
+				
+				$dropdown
+					.css('maxHeight', hght+'px')
+			})
+			
+			.on('open.xdsoft',function(){
+				if( iOpen )
+					return;
+				
+				$dropdown
+					.show()
+
+				iOpen = true;
+					
+				currentInput = $input;
+			})
+			.on('destroy.xdsoft',function(){
+				$input.removeClass('xdsoft');
+				$box.after($input);
+				$box.remove();
+				clearTimeout(timer1);
+				currentInput = false;
+				$input.data('xdsoft_autocomplete',null);
+				$input
+					.off('.xdsoft')
+			});
+	};
+	
+	publics = {
+		destroy: function () {
+			return this.trigger('destroy.xdsoft');
+		},
+		update: function () {
+			return this.trigger('updateHelperPosition.xdsoft');	
+		},
+		options: function (_options) {
+			if (this.data('autocomplete_options') && $.isPlainObject(_options)) {
+				this.data('autocomplete_options', $.extend(true, this.data('autocomplete_options'), _options));
+			}
+			return this;
+		},
+		setSource: function (_newsource, id) {
+			if(this.data('autocomplete_options') && ($.isPlainObject(_newsource) || $.isFunction(_newsource) || $.isArray(_newsource))) {
+				var options = this.data('autocomplete_options'), 
+					dataset = this.data('xdsoft_autocomplete'),
+					source 	= options.source;
+				if (id!==undefined && !isNaN(id)) {
+					if ($.isPlainObject(_newsource) || $.isArray(_newsource)) {
+						source[id] =  $.extend(true,$.isArray(_newsource) ? [] : {}, _newsource);
+					} else {
+						source[id] =  _newsource;
+					}
+				} else {
+					if ($.isFunction(_newsource)) {
+						this.data('autocomplete_options').source = _newsource;
+					} else {
+						$.extend(true, source, _newsource);
+					}
+				}
+				
+				collectData.call(options, this.val(), dataset,function( query ){
+					processData.call(options,dataset,query);
+				});
+			}
+			return this;
+		},
+		getSource: function (id) {
+			if (this.data('autocomplete_options')) {
+				var source = this.data('autocomplete_options').source;
+				if (id!==undefined && !isNaN(id) &&source[id]) {
+					return source[id];
+				} else {
+					return source;
+				}
+			}
+			return null;
+		} 
+	};
+	
+	$.fn.autocomplete = function(_options, _second, _third){
+		if ($.type(_options) === 'string' && publics[_options]) {
+			return publics[_options].call(this, _second, _third);
+		}
+		return this.each(function () {
+			var options = $.extend(true, {}, defaultSetting, _options);
+			init(this, options);
+		});
+	};
+}(jQuery));
+},{}],2:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v2.1.4
  * http://jquery.com/
@@ -9210,7 +10303,7 @@ return jQuery;
 
 }));
 
-},{}],2:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 module.exports={
 	"version": "2015g",
 	"zones": [
@@ -9801,11 +10894,11 @@ module.exports={
 		"Pacific/Pohnpei|Pacific/Ponape"
 	]
 }
-},{}],3:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 var moment = module.exports = require("./moment-timezone");
 moment.tz.load(require('./data/packed/latest.json'));
 
-},{"./data/packed/latest.json":2,"./moment-timezone":4}],4:[function(require,module,exports){
+},{"./data/packed/latest.json":3,"./moment-timezone":5}],5:[function(require,module,exports){
 //! moment-timezone.js
 //! version : 0.4.1
 //! author : Tim Wood
@@ -10233,7 +11326,7 @@ moment.tz.load(require('./data/packed/latest.json'));
 	return moment;
 }));
 
-},{"moment":5}],5:[function(require,module,exports){
+},{"moment":6}],6:[function(require,module,exports){
 //! moment.js
 //! version : 2.10.6
 //! authors : Tim Wood, Iskren Chernev, Moment.js contributors
@@ -13429,7 +14522,1257 @@ moment.tz.load(require('./data/packed/latest.json'));
     return _moment;
 
 }));
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
+/*! Tablesaw - v2.0.1 - 2015-10-09
+* https://github.com/filamentgroup/tablesaw
+* Copyright (c) 2015 Filament Group; Licensed MIT */
+/*
+* tablesaw: A set of plugins for responsive tables
+* Stack and Column Toggle tables
+* Copyright (c) 2013 Filament Group, Inc.
+* MIT License
+*/
+
+if( typeof Tablesaw === "undefined" ) {
+	Tablesaw = {
+		i18n: {
+			modes: [ 'Stack', 'Swipe', 'Toggle' ],
+			columns: 'Col<span class=\"a11y-sm\">umn</span>s',
+			columnBtnText: 'Columns',
+			columnsDialogError: 'No eligible columns.',
+			sort: 'Sort'
+		},
+		// cut the mustard
+		mustard: 'querySelector' in document &&
+			( !window.blackberry || window.WebKitPoint ) &&
+			!window.operamini
+	};
+}
+if( !Tablesaw.config ) {
+	Tablesaw.config = {};
+}
+if( Tablesaw.mustard ) {
+	jQuery( document.documentElement ).addClass( 'tablesaw-enhanced' );
+}
+
+;(function( $ ) {
+	var pluginName = "table",
+		classes = {
+			toolbar: "tablesaw-bar"
+		},
+		events = {
+			create: "tablesawcreate",
+			destroy: "tablesawdestroy",
+			refresh: "tablesawrefresh"
+		},
+		defaultMode = "stack",
+		initSelector = "table[data-tablesaw-mode],table[data-tablesaw-sortable]";
+
+	var Table = function( element ) {
+		if( !element ) {
+			throw new Error( "Tablesaw requires an element." );
+		}
+
+		this.table = element;
+		this.$table = $( element );
+
+		this.mode = this.$table.attr( "data-tablesaw-mode" ) || defaultMode;
+
+		this.init();
+	};
+
+	Table.prototype.init = function() {
+		// assign an id if there is none
+		if ( !this.$table.attr( "id" ) ) {
+			this.$table.attr( "id", pluginName + "-" + Math.round( Math.random() * 10000 ) );
+		}
+
+		this.createToolbar();
+
+		var colstart = this._initCells();
+
+		this.$table.trigger( events.create, [ this, colstart ] );
+	};
+
+	Table.prototype._initCells = function() {
+		var colstart,
+			thrs = this.table.querySelectorAll( "thead tr" ),
+			self = this;
+
+		$( thrs ).each( function(){
+			var coltally = 0;
+
+			$( this ).children().each( function(){
+				var span = parseInt( this.getAttribute( "colspan" ), 10 ),
+					sel = ":nth-child(" + ( coltally + 1 ) + ")";
+
+				colstart = coltally + 1;
+
+				if( span ){
+					for( var k = 0; k < span - 1; k++ ){
+						coltally++;
+						sel += ", :nth-child(" + ( coltally + 1 ) + ")";
+					}
+				}
+
+				// Store "cells" data on header as a reference to all cells in the same column as this TH
+				this.cells = self.$table.find("tr").not( thrs[0] ).not( this ).children().filter( sel );
+				coltally++;
+			});
+		});
+
+		return colstart;
+	};
+
+	Table.prototype.refresh = function() {
+		this._initCells();
+
+		this.$table.trigger( events.refresh );
+	};
+
+	Table.prototype.createToolbar = function() {
+		// Insert the toolbar
+		// TODO move this into a separate component
+		var $toolbar = this.$table.prev().filter( '.' + classes.toolbar );
+		if( !$toolbar.length ) {
+			$toolbar = $( '<div>' )
+				.addClass( classes.toolbar )
+				.insertBefore( this.$table );
+		}
+		this.$toolbar = $toolbar;
+
+		if( this.mode ) {
+			this.$toolbar.addClass( 'mode-' + this.mode );
+		}
+	};
+
+	Table.prototype.destroy = function() {
+		// Don’t remove the toolbar. Some of the table features are not yet destroy-friendly.
+		this.$table.prev().filter( '.' + classes.toolbar ).each(function() {
+			this.className = this.className.replace( /\bmode\-\w*\b/gi, '' );
+		});
+
+		var tableId = this.$table.attr( 'id' );
+		$( document ).unbind( "." + tableId );
+		$( window ).unbind( "." + tableId );
+
+		// other plugins
+		this.$table.trigger( events.destroy, [ this ] );
+
+		this.$table.removeAttr( 'data-tablesaw-mode' );
+
+		this.$table.removeData( pluginName );
+	};
+
+	// Collection method.
+	$.fn[ pluginName ] = function() {
+		return this.each( function() {
+			var $t = $( this );
+
+			if( $t.data( pluginName ) ){
+				return;
+			}
+
+			var table = new Table( this );
+			$t.data( pluginName, table );
+		});
+	};
+
+	$( document ).on( "enhance.tablesaw", function( e ) {
+		// Cut the mustard
+		if( Tablesaw.mustard ) {
+			$( e.target ).find( initSelector )[ pluginName ]();
+		}
+	});
+
+}( jQuery ));
+
+;(function( win, $, undefined ){
+
+	var classes = {
+		stackTable: 'tablesaw-stack',
+		cellLabels: 'tablesaw-cell-label',
+		cellContentLabels: 'tablesaw-cell-content'
+	};
+
+	var data = {
+		obj: 'tablesaw-stack'
+	};
+
+	var attrs = {
+		labelless: 'data-tablesaw-no-labels',
+		hideempty: 'data-tablesaw-hide-empty'
+	};
+
+	var Stack = function( element ) {
+
+		this.$table = $( element );
+
+		this.labelless = this.$table.is( '[' + attrs.labelless + ']' );
+		this.hideempty = this.$table.is( '[' + attrs.hideempty + ']' );
+
+		if( !this.labelless ) {
+			// allHeaders references headers, plus all THs in the thead, which may include several rows, or not
+			this.allHeaders = this.$table.find( "th" );
+		}
+
+		this.$table.data( data.obj, this );
+	};
+
+	Stack.prototype.init = function( colstart ) {
+		this.$table.addClass( classes.stackTable );
+
+		if( this.labelless ) {
+			return;
+		}
+
+		// get headers in reverse order so that top-level headers are appended last
+		var reverseHeaders = $( this.allHeaders );
+		var hideempty = this.hideempty;
+		
+		// create the hide/show toggles
+		reverseHeaders.each(function(){
+			var $t = $( this ),
+				$cells = $( this.cells ).filter(function() {
+					return !$( this ).parent().is( "[" + attrs.labelless + "]" ) && ( !hideempty || !$( this ).is( ":empty" ) );
+				}),
+				hierarchyClass = $cells.not( this ).filter( "thead th" ).length && " tablesaw-cell-label-top",
+				// TODO reduce coupling with sortable
+				$sortableButton = $t.find( ".tablesaw-sortable-btn" ),
+				html = $sortableButton.length ? $sortableButton.html() : $t.html();
+
+			if( html !== "" ){
+				if( hierarchyClass ){
+					var iteration = parseInt( $( this ).attr( "colspan" ), 10 ),
+						filter = "";
+
+					if( iteration ){
+						filter = "td:nth-child("+ iteration +"n + " + ( colstart ) +")";
+					}
+					$cells.filter( filter ).prepend( "<b class='" + classes.cellLabels + hierarchyClass + "'>" + html + "</b>"  );
+				} else {
+					$cells.wrapInner( "<span class='" + classes.cellContentLabels + "'></span>" );
+					$cells.prepend( "<b class='" + classes.cellLabels + "'>" + html + "</b>"  );
+				}
+			}
+		});
+	};
+
+	Stack.prototype.destroy = function() {
+		this.$table.removeClass( classes.stackTable );
+		this.$table.find( '.' + classes.cellLabels ).remove();
+		this.$table.find( '.' + classes.cellContentLabels ).each(function() {
+			$( this ).replaceWith( this.childNodes );
+		});
+	};
+
+	// on tablecreate, init
+	$( document ).on( "tablesawcreate", function( e, Tablesaw, colstart ){
+		if( Tablesaw.mode === 'stack' ){
+			var table = new Stack( Tablesaw.table );
+			table.init( colstart );
+		}
+
+	} );
+
+	$( document ).on( "tablesawdestroy", function( e, Tablesaw ){
+
+		if( Tablesaw.mode === 'stack' ){
+			$( Tablesaw.table ).data( data.obj ).destroy();
+		}
+
+	} );
+
+}( this, jQuery ));
+;(function( $ ) {
+	var pluginName = "tablesawbtn",
+		methods = {
+			_create: function(){
+				return $( this ).each(function() {
+					$( this )
+						.trigger( "beforecreate." + pluginName )
+						[ pluginName ]( "_init" )
+						.trigger( "create." + pluginName );
+				});
+			},
+			_init: function(){
+				var oEl = $( this ),
+					sel = this.getElementsByTagName( "select" )[ 0 ];
+
+				if( sel ) {
+					$( this )
+						.addClass( "btn-select" )
+						[ pluginName ]( "_select", sel );
+				}
+				return oEl;
+			},
+			_select: function( sel ) {
+				var update = function( oEl, sel ) {
+					var opts = $( sel ).find( "option" ),
+						label, el, children;
+
+					opts.each(function() {
+						var opt = this;
+						if( opt.selected ) {
+							label = document.createTextNode( opt.text );
+						}
+					});
+
+					children = oEl.childNodes;
+					if( opts.length > 0 ){
+						for( var i = 0, l = children.length; i < l; i++ ) {
+							el = children[ i ];
+
+							if( el && el.nodeType === 3 ) {
+								oEl.replaceChild( label, el );
+							}
+						}
+					}
+				};
+
+				update( this, sel );
+				$( this ).bind( "change refresh", function() {
+					update( this, sel );
+				});
+			}
+		};
+
+	// Collection method.
+	$.fn[ pluginName ] = function( arrg, a, b, c ) {
+		return this.each(function() {
+
+		// if it's a method
+		if( arrg && typeof( arrg ) === "string" ){
+			return $.fn[ pluginName ].prototype[ arrg ].call( this, a, b, c );
+		}
+
+		// don't re-init
+		if( $( this ).data( pluginName + "active" ) ){
+			return $( this );
+		}
+
+		// otherwise, init
+
+		$( this ).data( pluginName + "active", true );
+			$.fn[ pluginName ].prototype._create.call( this );
+		});
+	};
+
+	// add methods
+	$.extend( $.fn[ pluginName ].prototype, methods );
+
+}( jQuery ));
+;(function( win, $, undefined ){
+
+	var ColumnToggle = function( element ) {
+
+		this.$table = $( element );
+
+		this.classes = {
+			columnToggleTable: 'tablesaw-columntoggle',
+			columnBtnContain: 'tablesaw-columntoggle-btnwrap tablesaw-advance',
+			columnBtn: 'tablesaw-columntoggle-btn tablesaw-nav-btn down',
+			popup: 'tablesaw-columntoggle-popup',
+			priorityPrefix: 'tablesaw-priority-',
+			// TODO duplicate class, also in tables.js
+			toolbar: 'tablesaw-bar'
+		};
+
+		// Expose headers and allHeaders properties on the widget
+		// headers references the THs within the first TR in the table
+		this.headers = this.$table.find( 'tr:first > th' );
+
+		this.$table.data( 'tablesaw-coltoggle', this );
+	};
+
+	ColumnToggle.prototype.init = function() {
+
+		var tableId,
+			id,
+			$menuButton,
+			$popup,
+			$menu,
+			$btnContain,
+			self = this;
+
+		this.$table.addClass( this.classes.columnToggleTable );
+
+		tableId = this.$table.attr( "id" );
+		id = tableId + "-popup";
+		$btnContain = $( "<div class='" + this.classes.columnBtnContain + "'></div>" );
+		$menuButton = $( "<a href='#" + id + "' class='btn btn-micro " + this.classes.columnBtn +"' data-popup-link>" +
+										"<span>" + Tablesaw.i18n.columnBtnText + "</span></a>" );
+		$popup = $( "<div class='dialog-table-coltoggle " + this.classes.popup + "' id='" + id + "'></div>" );
+		$menu = $( "<div class='btn-group'></div>" );
+
+		var hasNonPersistentHeaders = false;
+		$( this.headers ).not( "td" ).each( function() {
+			var $this = $( this ),
+				priority = $this.attr("data-tablesaw-priority"),
+				$cells = $this.add( this.cells );
+
+			if( priority && priority !== "persist" ) {
+				$cells.addClass( self.classes.priorityPrefix + priority );
+
+				$("<label><input type='checkbox' checked>" + $this.text() + "</label>" )
+					.appendTo( $menu )
+					.children( 0 )
+					.data( "cells", $cells );
+
+				hasNonPersistentHeaders = true;
+			}
+		});
+
+		if( !hasNonPersistentHeaders ) {
+			$menu.append( '<label>' + Tablesaw.i18n.columnsDialogError + '</label>' );
+		}
+
+		$menu.appendTo( $popup );
+
+		// bind change event listeners to inputs - TODO: move to a private method?
+		$menu.find( 'input[type="checkbox"]' ).on( "change", function(e) {
+			var checked = e.target.checked;
+
+			$( e.target ).data( "cells" )
+				.toggleClass( "tablesaw-cell-hidden", !checked )
+				.toggleClass( "tablesaw-cell-visible", checked );
+
+			self.$table.trigger( 'tablesawcolumns' );
+		});
+
+		$menuButton.appendTo( $btnContain );
+		$btnContain.appendTo( this.$table.prev().filter( '.' + this.classes.toolbar ) );
+
+		var closeTimeout;
+		function openPopup() {
+			$btnContain.addClass( 'visible' );
+			$menuButton.removeClass( 'down' ).addClass( 'up' );
+
+			$( document ).unbind( 'click.' + tableId, closePopup );
+
+			window.clearTimeout( closeTimeout );
+			closeTimeout = window.setTimeout(function() {
+				$( document ).one( 'click.' + tableId, closePopup );
+			}, 15 );
+		}
+
+		function closePopup( event ) {
+			// Click came from inside the popup, ignore.
+			if( event && $( event.target ).closest( "." + self.classes.popup ).length ) {
+				return;
+			}
+
+			$( document ).unbind( 'click.' + tableId );
+			$menuButton.removeClass( 'up' ).addClass( 'down' );
+			$btnContain.removeClass( 'visible' );
+		}
+
+		$menuButton.on( "click.tablesaw", function( event ) {
+			event.preventDefault();
+
+			if( !$btnContain.is( ".visible" ) ) {
+				openPopup();
+			} else {
+				closePopup();
+			}
+		});
+
+		$popup.appendTo( $btnContain );
+
+		this.$menu = $menu;
+
+		$(window).on( "resize." + tableId, function(){
+			self.refreshToggle();
+		});
+
+		this.refreshToggle();
+	};
+
+	ColumnToggle.prototype.refreshToggle = function() {
+		this.$menu.find( "input" ).each( function() {
+			var $this = $( this );
+
+			this.checked = $this.data( "cells" ).eq( 0 ).css( "display" ) === "table-cell";
+		});
+	};
+
+	ColumnToggle.prototype.refreshPriority = function(){
+		var self = this;
+		$(this.headers).not( "td" ).each( function() {
+			var $this = $( this ),
+				priority = $this.attr("data-tablesaw-priority"),
+				$cells = $this.add( this.cells );
+
+			if( priority && priority !== "persist" ) {
+				$cells.addClass( self.classes.priorityPrefix + priority );
+			}
+		});
+	};
+
+	ColumnToggle.prototype.destroy = function() {
+		// table toolbars, document and window .tableId events
+		// removed in parent tables.js destroy method
+
+		this.$table.removeClass( this.classes.columnToggleTable );
+		this.$table.find( 'th, td' ).each(function() {
+			var $cell = $( this );
+			$cell.removeClass( 'tablesaw-cell-hidden' )
+				.removeClass( 'tablesaw-cell-visible' );
+
+			this.className = this.className.replace( /\bui\-table\-priority\-\d\b/g, '' );
+		});
+	};
+
+	// on tablecreate, init
+	$( document ).on( "tablesawcreate", function( e, Tablesaw ){
+
+		if( Tablesaw.mode === 'columntoggle' ){
+			var table = new ColumnToggle( Tablesaw.table );
+			table.init();
+		}
+
+	} );
+
+	$( document ).on( "tablesawdestroy", function( e, Tablesaw ){
+		if( Tablesaw.mode === 'columntoggle' ){
+			$( Tablesaw.table ).data( 'tablesaw-coltoggle' ).destroy();
+		}
+	} );
+
+}( this, jQuery ));
+;(function( win, $, undefined ){
+
+	$.extend( Tablesaw.config, {
+		swipe: {
+			horizontalThreshold: 15,
+			verticalThreshold: 30
+		}
+	});
+
+	function isIE8() {
+		var div = document.createElement('div'),
+			all = div.getElementsByTagName('i');
+
+		div.innerHTML = '<!--[if lte IE 8]><i></i><![endif]-->';
+
+		return !!all.length;
+	}
+
+	function createSwipeTable( $table ){
+
+		var $btns = $( "<div class='tablesaw-advance'></div>" ),
+			$prevBtn = $( "<a href='#' class='tablesaw-nav-btn btn btn-micro left' title='Previous Column'></a>" ).appendTo( $btns ),
+			$nextBtn = $( "<a href='#' class='tablesaw-nav-btn btn btn-micro right' title='Next Column'></a>" ).appendTo( $btns ),
+			hideBtn = 'disabled',
+			persistWidths = 'tablesaw-fix-persist',
+			$headerCells = $table.find( "thead th" ),
+			$headerCellsNoPersist = $headerCells.not( '[data-tablesaw-priority="persist"]' ),
+			headerWidths = [],
+			$head = $( document.head || 'head' ),
+			tableId = $table.attr( 'id' ),
+			// TODO switch this to an nth-child feature test
+			supportsNthChild = !isIE8();
+
+		if( !$headerCells.length ) {
+			throw new Error( "tablesaw swipe: no header cells found. Are you using <th> inside of <thead>?" );
+		}
+
+		// Calculate initial widths
+		$table.css('width', 'auto');
+		$headerCells.each(function() {
+			headerWidths.push( $( this ).outerWidth() );
+		});
+		$table.css( 'width', '' );
+
+		$btns.appendTo( $table.prev().filter( '.tablesaw-bar' ) );
+
+		$table.addClass( "tablesaw-swipe" );
+
+		if( !tableId ) {
+			tableId = 'tableswipe-' + Math.round( Math.random() * 10000 );
+			$table.attr( 'id', tableId );
+		}
+
+		function $getCells( headerCell ) {
+			return $( headerCell.cells ).add( headerCell );
+		}
+
+		function showColumn( headerCell ) {
+			$getCells( headerCell ).removeClass( 'tablesaw-cell-hidden' );
+		}
+
+		function hideColumn( headerCell ) {
+			$getCells( headerCell ).addClass( 'tablesaw-cell-hidden' );
+		}
+
+		function persistColumn( headerCell ) {
+			$getCells( headerCell ).addClass( 'tablesaw-cell-persist' );
+		}
+
+		function isPersistent( headerCell ) {
+			return $( headerCell ).is( '[data-tablesaw-priority="persist"]' );
+		}
+
+		function unmaintainWidths() {
+			$table.removeClass( persistWidths );
+			$( '#' + tableId + '-persist' ).remove();
+		}
+
+		function maintainWidths() {
+			var prefix = '#' + tableId + '.tablesaw-swipe ',
+				styles = [],
+				tableWidth = $table.width(),
+				hash = [],
+				newHash;
+
+			$headerCells.each(function( index ) {
+				var width;
+				if( isPersistent( this ) ) {
+					width = $( this ).outerWidth();
+
+					// Only save width on non-greedy columns (take up less than 75% of table width)
+					if( width < tableWidth * 0.75 ) {
+						hash.push( index + '-' + width );
+						styles.push( prefix + ' .tablesaw-cell-persist:nth-child(' + ( index + 1 ) + ') { width: ' + width + 'px; }' );
+					}
+				}
+			});
+			newHash = hash.join( '_' );
+
+			$table.addClass( persistWidths );
+
+			var $style = $( '#' + tableId + '-persist' );
+			// If style element not yet added OR if the widths have changed
+			if( !$style.length || $style.data( 'hash' ) !== newHash ) {
+				// Remove existing
+				$style.remove();
+
+				if( styles.length ) {
+					$( '<style>' + styles.join( "\n" ) + '</style>' )
+						.attr( 'id', tableId + '-persist' )
+						.data( 'hash', newHash )
+						.appendTo( $head );
+				}
+			}
+		}
+
+		function getNext(){
+			var next = [],
+				checkFound;
+
+			$headerCellsNoPersist.each(function( i ) {
+				var $t = $( this ),
+					isHidden = $t.css( "display" ) === "none" || $t.is( ".tablesaw-cell-hidden" );
+
+				if( !isHidden && !checkFound ) {
+					checkFound = true;
+					next[ 0 ] = i;
+				} else if( isHidden && checkFound ) {
+					next[ 1 ] = i;
+
+					return false;
+				}
+			});
+
+			return next;
+		}
+
+		function getPrev(){
+			var next = getNext();
+			return [ next[ 1 ] - 1 , next[ 0 ] - 1 ];
+		}
+
+		function nextpair( fwd ){
+			return fwd ? getNext() : getPrev();
+		}
+
+		function canAdvance( pair ){
+			return pair[ 1 ] > -1 && pair[ 1 ] < $headerCellsNoPersist.length;
+		}
+
+		function matchesMedia() {
+			var matchMedia = $table.attr( "data-tablesaw-swipe-media" );
+			return !matchMedia || ( "matchMedia" in win ) && win.matchMedia( matchMedia ).matches;
+		}
+
+		function fakeBreakpoints() {
+			if( !matchesMedia() ) {
+				return;
+			}
+
+			var extraPaddingPixels = 20,
+				containerWidth = $table.parent().width(),
+				persist = [],
+				sum = 0,
+				sums = [],
+				visibleNonPersistantCount = $headerCells.length;
+
+			$headerCells.each(function( index ) {
+				var $t = $( this ),
+					isPersist = $t.is( '[data-tablesaw-priority="persist"]' );
+
+				persist.push( isPersist );
+
+				sum += headerWidths[ index ] + ( isPersist ? 0 : extraPaddingPixels );
+				sums.push( sum );
+
+				// is persistent or is hidden
+				if( isPersist || sum > containerWidth ) {
+					visibleNonPersistantCount--;
+				}
+			});
+
+			var needsNonPersistentColumn = visibleNonPersistantCount === 0;
+
+			$headerCells.each(function( index ) {
+				if( persist[ index ] ) {
+
+					// for visual box-shadow
+					persistColumn( this );
+					return;
+				}
+
+				if( sums[ index ] <= containerWidth || needsNonPersistentColumn ) {
+					needsNonPersistentColumn = false;
+					showColumn( this );
+				} else {
+					hideColumn( this );
+				}
+			});
+
+			if( supportsNthChild ) {
+				unmaintainWidths();
+			}
+			$table.trigger( 'tablesawcolumns' );
+		}
+
+		function advance( fwd ){
+			var pair = nextpair( fwd );
+			if( canAdvance( pair ) ){
+				if( isNaN( pair[ 0 ] ) ){
+					if( fwd ){
+						pair[0] = 0;
+					}
+					else {
+						pair[0] = $headerCellsNoPersist.length - 1;
+					}
+				}
+
+				if( supportsNthChild ) {
+					maintainWidths();
+				}
+
+				hideColumn( $headerCellsNoPersist.get( pair[ 0 ] ) );
+				showColumn( $headerCellsNoPersist.get( pair[ 1 ] ) );
+
+				$table.trigger( 'tablesawcolumns' );
+			}
+		}
+
+		$prevBtn.add( $nextBtn ).click(function( e ){
+			advance( !!$( e.target ).closest( $nextBtn ).length );
+			e.preventDefault();
+		});
+
+		function getCoord( event, key ) {
+			return ( event.touches || event.originalEvent.touches )[ 0 ][ key ];
+		}
+
+		$table
+			.bind( "touchstart.swipetoggle", function( e ){
+				var originX = getCoord( e, 'pageX' ),
+					originY = getCoord( e, 'pageY' ),
+					x,
+					y;
+
+				$( win ).off( "resize", fakeBreakpoints );
+
+				$( this )
+					.bind( "touchmove", function( e ){
+						x = getCoord( e, 'pageX' );
+						y = getCoord( e, 'pageY' );
+						var cfg = Tablesaw.config.swipe;
+						if( Math.abs( x - originX ) > cfg.horizontalThreshold && Math.abs( y - originY ) < cfg.verticalThreshold ) {
+							e.preventDefault();
+						}
+					})
+					.bind( "touchend.swipetoggle", function(){
+						var cfg = Tablesaw.config.swipe;
+						if( Math.abs( y - originY ) < cfg.verticalThreshold ) {
+							if( x - originX < -1 * cfg.horizontalThreshold ){
+								advance( true );
+							}
+							if( x - originX > cfg.horizontalThreshold ){
+								advance( false );
+							}
+						}
+
+						window.setTimeout(function() {
+							$( win ).on( "resize", fakeBreakpoints );
+						}, 300);
+						$( this ).unbind( "touchmove touchend" );
+					});
+
+			})
+			.bind( "tablesawcolumns.swipetoggle", function(){
+				$prevBtn[ canAdvance( getPrev() ) ? "removeClass" : "addClass" ]( hideBtn );
+				$nextBtn[ canAdvance( getNext() ) ? "removeClass" : "addClass" ]( hideBtn );
+			})
+			.bind( "tablesawnext.swipetoggle", function(){
+				advance( true );
+			} )
+			.bind( "tablesawprev.swipetoggle", function(){
+				advance( false );
+			} )
+			.bind( "tablesawdestroy.swipetoggle", function(){
+				var $t = $( this );
+
+				$t.removeClass( 'tablesaw-swipe' );
+				$t.prev().filter( '.tablesaw-bar' ).find( '.tablesaw-advance' ).remove();
+				$( win ).off( "resize", fakeBreakpoints );
+
+				$t.unbind( ".swipetoggle" );
+			});
+
+		fakeBreakpoints();
+		$( win ).on( "resize", fakeBreakpoints );
+	}
+
+
+
+	// on tablecreate, init
+	$( document ).on( "tablesawcreate", function( e, Tablesaw ){
+
+		if( Tablesaw.mode === 'swipe' ){
+			createSwipeTable( Tablesaw.$table );
+		}
+
+	} );
+
+}( this, jQuery ));
+
+;(function( $ ) {
+	function getSortValue( cell ) {
+		return $.map( cell.childNodes, function( el ) {
+				var $el = $( el );
+				if( $el.is( 'input, select' ) ) {
+					return $el.val();
+				} else if( $el.hasClass( 'tablesaw-cell-label' ) ) {
+					return;
+				}
+				return $.trim( $el.text() );
+			}).join( '' );
+	}
+
+	var pluginName = "tablesaw-sortable",
+		initSelector = "table[data-" + pluginName + "]",
+		sortableSwitchSelector = "[data-" + pluginName + "-switch]",
+		attrs = {
+			defaultCol: "data-tablesaw-sortable-default-col"
+		},
+		classes = {
+			head: pluginName + "-head",
+			ascend: pluginName + "-ascending",
+			descend: pluginName + "-descending",
+			switcher: pluginName + "-switch",
+			tableToolbar: 'tablesaw-toolbar',
+			sortButton: pluginName + "-btn"
+		},
+		methods = {
+			_create: function( o ){
+				return $( this ).each(function() {
+					var init = $( this ).data( "init" + pluginName );
+					if( init ) {
+						return false;
+					}
+					$( this )
+						.data( "init"+ pluginName, true )
+						.trigger( "beforecreate." + pluginName )
+						[ pluginName ]( "_init" , o )
+						.trigger( "create." + pluginName );
+				});
+			},
+			_init: function(){
+				var el = $( this ),
+					heads,
+					$switcher;
+
+				var addClassToTable = function(){
+						el.addClass( pluginName );
+					},
+					addClassToHeads = function( h ){
+						$.each( h , function( i , v ){
+							$( v ).addClass( classes.head );
+						});
+					},
+					makeHeadsActionable = function( h , fn ){
+						$.each( h , function( i , v ){
+							var b = $( "<button class='" + classes.sortButton + "'/>" );
+							b.bind( "click" , { col: v } , fn );
+							$( v ).wrapInner( b );
+						});
+					},
+					clearOthers = function( sibs ){
+						$.each( sibs , function( i , v ){
+							var col = $( v );
+							col.removeAttr( attrs.defaultCol );
+							col.removeClass( classes.ascend );
+							col.removeClass( classes.descend );
+						});
+					},
+					headsOnAction = function( e ){
+						if( $( e.target ).is( 'a[href]' ) ) {
+							return;
+						}
+
+						e.stopPropagation();
+						var head = $( this ).parent(),
+							v = e.data.col,
+							newSortValue = heads.index( head );
+
+						clearOthers( head.siblings() );
+						if( head.hasClass( classes.descend ) ){
+							el[ pluginName ]( "sortBy" , v , true);
+							newSortValue += '_asc';
+						} else {
+							el[ pluginName ]( "sortBy" , v );
+							newSortValue += '_desc';
+						}
+						if( $switcher ) {
+							$switcher.find( 'select' ).val( newSortValue ).trigger( 'refresh' );
+						}
+
+						e.preventDefault();
+					},
+					handleDefault = function( heads ){
+						$.each( heads , function( idx , el ){
+							var $el = $( el );
+							if( $el.is( "[" + attrs.defaultCol + "]" ) ){
+								if( !$el.hasClass( classes.descend ) ) {
+									$el.addClass( classes.ascend );
+								}
+							}
+						});
+					},
+					addSwitcher = function( heads ){
+						$switcher = $( '<div>' ).addClass( classes.switcher ).addClass( classes.tableToolbar ).html(function() {
+							var html = [ '<label>' + Tablesaw.i18n.sort + ':' ];
+
+							html.push( '<span class="btn btn-small">&#160;<select>' );
+							heads.each(function( j ) {
+								var $t = $( this ),
+									isDefaultCol = $t.is( "[" + attrs.defaultCol + "]" ),
+									isDescending = $t.hasClass( classes.descend ),
+									isNumeric = false;
+
+								// Check only the first three rows to see if the column is numbers.
+								$( this.cells ).slice( 0, 3 ).each(function() {
+									if( !isNaN( parseInt( getSortValue( this ), 10 ) ) ) {
+										isNumeric = true;
+										return false;
+									}
+								});
+
+								html.push( '<option' + ( isDefaultCol && !isDescending ? ' selected' : '' ) + ' value="' + j + '_asc">' + $t.text() + ' ' + ( isNumeric ? '&#x2191;' : '(A-Z)' ) + '</option>' );
+								html.push( '<option' + ( isDefaultCol && isDescending ? ' selected' : '' ) + ' value="' + j + '_desc">' + $t.text() + ' ' + ( isNumeric ? '&#x2193;' : '(Z-A)' ) + '</option>' );
+							});
+							html.push( '</select></span></label>' );
+
+							return html.join('');
+						});
+
+						var $toolbar = el.prev().filter( '.tablesaw-bar' ),
+							$firstChild = $toolbar.children().eq( 0 );
+
+						if( $firstChild.length ) {
+							$switcher.insertBefore( $firstChild );
+						} else {
+							$switcher.appendTo( $toolbar );
+						}
+						$switcher.find( '.btn' ).tablesawbtn();
+						$switcher.find( 'select' ).on( 'change', function() {
+							var val = $( this ).val().split( '_' ),
+								head = heads.eq( val[ 0 ] );
+
+							clearOthers( head.siblings() );
+							el[ pluginName ]( 'sortBy', head.get( 0 ), val[ 1 ] === 'asc' );
+						});
+					};
+
+					addClassToTable();
+					heads = el.find( "thead th[data-" + pluginName + "-col]" );
+					addClassToHeads( heads );
+					makeHeadsActionable( heads , headsOnAction );
+					handleDefault( heads );
+
+					if( el.is( sortableSwitchSelector ) ) {
+						addSwitcher( heads, el.find('tbody tr:nth-child(-n+3)') );
+					}
+			},
+			getColumnNumber: function( col ){
+				return $( col ).prevAll().length;
+			},
+			getTableRows: function(){
+				return $( this ).find( "tbody tr" );
+			},
+			sortRows: function( rows , colNum , ascending, col ){
+				var cells, fn, sorted;
+				var getCells = function( rows ){
+						var cells = [];
+						$.each( rows , function( i , r ){
+							cells.push({
+								cell: getSortValue( $( r ).children().get( colNum ) ),
+								rowNum: i
+							});
+						});
+						return cells;
+					},
+					getSortFxn = function( ascending, forceNumeric ){
+						var fn,
+							regex = /[^\-\+\d\.]/g;
+						if( ascending ){
+							fn = function( a , b ){
+								if( forceNumeric || !isNaN( parseFloat( a.cell ) ) ) {
+									return parseFloat( a.cell.replace( regex, '' ) ) - parseFloat( b.cell.replace( regex, '' ) );
+								} else {
+									return a.cell.toLowerCase() > b.cell.toLowerCase() ? 1 : -1;
+								}
+							};
+						} else {
+							fn = function( a , b ){
+								if( forceNumeric || !isNaN( parseFloat( a.cell ) ) ) {
+									return parseFloat( b.cell.replace( regex, '' ) ) - parseFloat( a.cell.replace( regex, '' ) );
+								} else {
+									return a.cell.toLowerCase() < b.cell.toLowerCase() ? 1 : -1;
+								}
+							};
+						}
+						return fn;
+					},
+					applyToRows = function( sorted , rows ){
+						var newRows = [], i, l, cur;
+						for( i = 0, l = sorted.length ; i < l ; i++ ){
+							cur = sorted[ i ].rowNum;
+							newRows.push( rows[cur] );
+						}
+						return newRows;
+					};
+
+				cells = getCells( rows );
+				var customFn = $( col ).data( 'tablesaw-sort' );
+				fn = ( customFn && typeof customFn === "function" ? customFn( ascending ) : false ) ||
+					getSortFxn( ascending, $( col ).is( '[data-sortable-numeric]' ) );
+				sorted = cells.sort( fn );
+				rows = applyToRows( sorted , rows );
+				return rows;
+			},
+			replaceTableRows: function( rows ){
+				var el = $( this ),
+					body = el.find( "tbody" );
+				body.html( rows );
+			},
+			makeColDefault: function( col , a ){
+				var c = $( col );
+				c.attr( attrs.defaultCol , "true" );
+				if( a ){
+					c.removeClass( classes.descend );
+					c.addClass( classes.ascend );
+				} else {
+					c.removeClass( classes.ascend );
+					c.addClass( classes.descend );
+				}
+			},
+			sortBy: function( col , ascending ){
+				var el = $( this ), colNum, rows;
+
+				colNum = el[ pluginName ]( "getColumnNumber" , col );
+				rows = el[ pluginName ]( "getTableRows" );
+				rows = el[ pluginName ]( "sortRows" , rows , colNum , ascending, col );
+				el[ pluginName ]( "replaceTableRows" , rows );
+				el[ pluginName ]( "makeColDefault" , col , ascending );
+			}
+		};
+
+	// Collection method.
+	$.fn[ pluginName ] = function( arrg ) {
+		var args = Array.prototype.slice.call( arguments , 1),
+			returnVal;
+
+		// if it's a method
+		if( arrg && typeof( arrg ) === "string" ){
+			returnVal = $.fn[ pluginName ].prototype[ arrg ].apply( this[0], args );
+			return (typeof returnVal !== "undefined")? returnVal:$(this);
+		}
+		// check init
+		if( !$( this ).data( pluginName + "data" ) ){
+			$( this ).data( pluginName + "active", true );
+			$.fn[ pluginName ].prototype._create.call( this , arrg );
+		}
+		return $(this);
+	};
+	// add methods
+	$.extend( $.fn[ pluginName ].prototype, methods );
+
+	$( document ).on( "tablesawcreate", function( e, Tablesaw ) {
+		if( Tablesaw.$table.is( initSelector ) ) {
+			Tablesaw.$table[ pluginName ]();
+		}
+	});
+
+}( jQuery ));
+
+;(function( win, $, undefined ){
+
+	var MM = {
+		attr: {
+			init: 'data-tablesaw-minimap'
+		}
+	};
+
+	function createMiniMap( $table ){
+
+		var $btns = $( '<div class="tablesaw-advance minimap">' ),
+			$dotNav = $( '<ul class="tablesaw-advance-dots">' ).appendTo( $btns ),
+			hideDot = 'tablesaw-advance-dots-hide',
+			$headerCells = $table.find( 'thead th' );
+
+		// populate dots
+		$headerCells.each(function(){
+			$dotNav.append( '<li><i></i></li>' );
+		});
+
+		$btns.appendTo( $table.prev().filter( '.tablesaw-bar' ) );
+
+		function showMinimap( $table ) {
+			var mq = $table.attr( MM.attr.init );
+			return !mq || win.matchMedia && win.matchMedia( mq ).matches;
+		}
+
+		function showHideNav(){
+			if( !showMinimap( $table ) ) {
+				$btns.hide();
+				return;
+			}
+			$btns.show();
+
+			// show/hide dots
+			var dots = $dotNav.find( "li" ).removeClass( hideDot );
+			$table.find( "thead th" ).each(function(i){
+				if( $( this ).css( "display" ) === "none" ){
+					dots.eq( i ).addClass( hideDot );
+				}
+			});
+		}
+
+		// run on init and resize
+		showHideNav();
+		$( win ).on( "resize", showHideNav );
+
+
+		$table
+			.bind( "tablesawcolumns.minimap", function(){
+				showHideNav();
+			})
+			.bind( "tablesawdestroy.minimap", function(){
+				var $t = $( this );
+
+				$t.prev().filter( '.tablesaw-bar' ).find( '.tablesaw-advance' ).remove();
+				$( win ).off( "resize", showHideNav );
+
+				$t.unbind( ".minimap" );
+			});
+	}
+
+
+
+	// on tablecreate, init
+	$( document ).on( "tablesawcreate", function( e, Tablesaw ){
+
+		if( ( Tablesaw.mode === 'swipe' || Tablesaw.mode === 'columntoggle' ) && Tablesaw.$table.is( '[ ' + MM.attr.init + ']' ) ){
+			createMiniMap( Tablesaw.$table );
+		}
+
+	} );
+
+}( this, jQuery ));
+
+;(function( win, $ ) {
+
+	var S = {
+		selectors: {
+			init: 'table[data-tablesaw-mode-switch]'
+		},
+		attributes: {
+			excludeMode: 'data-tablesaw-mode-exclude'
+		},
+		classes: {
+			main: 'tablesaw-modeswitch',
+			toolbar: 'tablesaw-toolbar'
+		},
+		modes: [ 'stack', 'swipe', 'columntoggle' ],
+		init: function( table ) {
+			var $table = $( table ),
+				ignoreMode = $table.attr( S.attributes.excludeMode ),
+				$toolbar = $table.prev().filter( '.tablesaw-bar' ),
+				modeVal = '',
+				$switcher = $( '<div>' ).addClass( S.classes.main + ' ' + S.classes.toolbar ).html(function() {
+					var html = [ '<label>' + Tablesaw.i18n.columns + ':' ],
+						dataMode = $table.attr( 'data-tablesaw-mode' ),
+						isSelected;
+
+					html.push( '<span class="btn btn-small">&#160;<select>' );
+					for( var j=0, k = S.modes.length; j<k; j++ ) {
+						if( ignoreMode && ignoreMode.toLowerCase() === S.modes[ j ] ) {
+							continue;
+						}
+
+						isSelected = dataMode === S.modes[ j ];
+
+						if( isSelected ) {
+							modeVal = S.modes[ j ];
+						}
+
+						html.push( '<option' +
+							( isSelected ? ' selected' : '' ) +
+							' value="' + S.modes[ j ] + '">' + Tablesaw.i18n.modes[ j ] + '</option>' );
+					}
+					html.push( '</select></span></label>' );
+
+					return html.join('');
+				});
+
+			var $otherToolbarItems = $toolbar.find( '.tablesaw-advance' ).eq( 0 );
+			if( $otherToolbarItems.length ) {
+				$switcher.insertBefore( $otherToolbarItems );
+			} else {
+				$switcher.appendTo( $toolbar );
+			}
+
+			$switcher.find( '.btn' ).tablesawbtn();
+			$switcher.find( 'select' ).bind( 'change', S.onModeChange );
+		},
+		onModeChange: function() {
+			var $t = $( this ),
+				$switcher = $t.closest( '.' + S.classes.main ),
+				$table = $t.closest( '.tablesaw-bar' ).nextUntil( $table ).eq( 0 ),
+				val = $t.val();
+
+			$switcher.remove();
+			$table.data( 'table' ).destroy();
+
+			$table.attr( 'data-tablesaw-mode', val );
+			$table.table();
+		}
+	};
+
+	$( win.document ).on( "tablesawcreate", function( e, Tablesaw ) {
+		if( Tablesaw.$table.is( S.selectors.init ) ) {
+			S.init( Tablesaw.table );
+		}
+	});
+
+})( this, jQuery );
+},{}],8:[function(require,module,exports){
 //     Underscore.js 1.8.3
 //     http://underscorejs.org
 //     (c) 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -14979,7 +17322,461 @@ moment.tz.load(require('./data/packed/latest.json'));
   }
 }.call(this));
 
-},{}],7:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
+/* =============================================================
+ * bootstrap3-typeahead.js v3.1.0
+ * https://github.com/bassjobsen/Bootstrap-3-Typeahead
+ * =============================================================
+ * Original written by @mdo and @fat
+ * =============================================================
+ * Copyright 2014 Bass Jobsen @bassjobsen
+ *
+ * Licensed under the Apache License, Version 2.0 (the 'License');
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an 'AS IS' BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * ============================================================ */
+
+'use strict';
+
+(function (root, factory) {
+
+  'use strict';
+
+  // CommonJS module is defined
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = factory(require('jquery'));
+  }
+  // AMD module is defined
+  else if (typeof define === 'function' && define.amd) {
+      define(['jquery'], function ($) {
+        return factory($);
+      });
+    } else {
+      factory(root.jQuery);
+    }
+})(undefined, function ($) {
+
+  'use strict';
+  // jshint laxcomma: true
+
+  /* TYPEAHEAD PUBLIC CLASS DEFINITION
+   * ================================= */
+
+  var Typeahead = function Typeahead(element, options) {
+    this.$element = $(element);
+    this.options = $.extend({}, $.fn.typeahead.defaults, options);
+    this.matcher = this.options.matcher || this.matcher;
+    this.sorter = this.options.sorter || this.sorter;
+    this.select = this.options.select || this.select;
+    this.autoSelect = typeof this.options.autoSelect == 'boolean' ? this.options.autoSelect : true;
+    this.highlighter = this.options.highlighter || this.highlighter;
+    this.render = this.options.render || this.render;
+    this.updater = this.options.updater || this.updater;
+    this.displayText = this.options.displayText || this.displayText;
+    this.source = this.options.source;
+    this.delay = this.options.delay;
+    this.$menu = $(this.options.menu);
+    this.$appendTo = this.options.appendTo ? $(this.options.appendTo) : null;
+    this.shown = false;
+    this.listen();
+    this.showHintOnFocus = typeof this.options.showHintOnFocus == 'boolean' ? this.options.showHintOnFocus : false;
+    this.afterSelect = this.options.afterSelect;
+    this.addItem = false;
+  };
+
+  Typeahead.prototype = {
+
+    constructor: Typeahead,
+
+    select: function select() {
+      var val = this.$menu.find('.active').data('value');
+      this.$element.data('active', val);
+      if (this.autoSelect || val) {
+        var newVal = this.updater(val);
+        this.$element.val(this.displayText(newVal) || newVal).change();
+        this.afterSelect(newVal);
+      }
+      return this.hide();
+    },
+
+    updater: function updater(item) {
+      return item;
+    },
+
+    setSource: function setSource(source) {
+      this.source = source;
+    },
+
+    show: function show() {
+      var pos = $.extend({}, this.$element.position(), {
+        height: this.$element[0].offsetHeight
+      }),
+          scrollHeight;
+
+      scrollHeight = typeof this.options.scrollHeight == 'function' ? this.options.scrollHeight.call() : this.options.scrollHeight;
+
+      (this.$appendTo ? this.$menu.appendTo(this.$appendTo) : this.$menu.insertAfter(this.$element)).css({
+        top: pos.top + pos.height + scrollHeight,
+        left: pos.left
+      }).show();
+
+      this.shown = true;
+      return this;
+    },
+
+    hide: function hide() {
+      this.$menu.hide();
+      this.shown = false;
+      return this;
+    },
+
+    lookup: function lookup(query) {
+      var items;
+      if (typeof query != 'undefined' && query !== null) {
+        this.query = query;
+      } else {
+        this.query = this.$element.val() || '';
+      }
+
+      if (this.query.length < this.options.minLength) {
+        return this.shown ? this.hide() : this;
+      }
+
+      var worker = $.proxy(function () {
+
+        if ($.isFunction(this.source)) this.source(this.query, $.proxy(this.process, this));else if (this.source) {
+          this.process(this.source);
+        }
+      }, this);
+
+      clearTimeout(this.lookupWorker);
+      this.lookupWorker = setTimeout(worker, this.delay);
+    },
+
+    process: function process(items) {
+      var that = this;
+
+      items = $.grep(items, function (item) {
+        return that.matcher(item);
+      });
+
+      items = this.sorter(items);
+
+      if (!items.length && !this.options.addItem) {
+        return this.shown ? this.hide() : this;
+      }
+
+      if (items.length > 0) {
+        this.$element.data('active', items[0]);
+      } else {
+        this.$element.data('active', null);
+      }
+
+      // Add item
+      if (this.options.addItem) {
+        items.push(this.options.addItem);
+      }
+
+      if (this.options.items == 'all') {
+        return this.render(items).show();
+      } else {
+        return this.render(items.slice(0, this.options.items)).show();
+      }
+    },
+
+    matcher: function matcher(item) {
+      var it = this.displayText(item);
+      return ~it.toLowerCase().indexOf(this.query.toLowerCase());
+    },
+
+    sorter: function sorter(items) {
+      var beginswith = [],
+          caseSensitive = [],
+          caseInsensitive = [],
+          item;
+
+      while (item = items.shift()) {
+        var it = this.displayText(item);
+        if (!it.toLowerCase().indexOf(this.query.toLowerCase())) beginswith.push(item);else if (~it.indexOf(this.query)) caseSensitive.push(item);else caseInsensitive.push(item);
+      }
+
+      return beginswith.concat(caseSensitive, caseInsensitive);
+    },
+
+    highlighter: function highlighter(item) {
+      var html = $('<div></div>');
+      var query = this.query;
+      var i = item.toLowerCase().indexOf(query.toLowerCase());
+      var len, leftPart, middlePart, rightPart, strong;
+      len = query.length;
+      if (len === 0) {
+        return html.text(item).html();
+      }
+      while (i > -1) {
+        leftPart = item.substr(0, i);
+        middlePart = item.substr(i, len);
+        rightPart = item.substr(i + len);
+        strong = $('<strong></strong>').text(middlePart);
+        html.append(document.createTextNode(leftPart)).append(strong);
+        item = rightPart;
+        i = item.toLowerCase().indexOf(query.toLowerCase());
+      }
+      return html.append(document.createTextNode(item)).html();
+    },
+
+    render: function render(items) {
+      var that = this;
+      var self = this;
+      var activeFound = false;
+      items = $(items).map(function (i, item) {
+        var text = self.displayText(item);
+        i = $(that.options.item).data('value', item);
+        i.find('a').html(that.highlighter(text));
+        if (text == self.$element.val()) {
+          i.addClass('active');
+          self.$element.data('active', item);
+          activeFound = true;
+        }
+        return i[0];
+      });
+
+      if (this.autoSelect && !activeFound) {
+        items.first().addClass('active');
+        this.$element.data('active', items.first().data('value'));
+      }
+      this.$menu.html(items);
+      return this;
+    },
+
+    displayText: function displayText(item) {
+      return item.name || item;
+    },
+
+    next: function next(event) {
+      var active = this.$menu.find('.active').removeClass('active'),
+          next = active.next();
+
+      if (!next.length) {
+        next = $(this.$menu.find('li')[0]);
+      }
+
+      next.addClass('active');
+    },
+
+    prev: function prev(event) {
+      var active = this.$menu.find('.active').removeClass('active'),
+          prev = active.prev();
+
+      if (!prev.length) {
+        prev = this.$menu.find('li').last();
+      }
+
+      prev.addClass('active');
+    },
+
+    listen: function listen() {
+      this.$element.on('focus', $.proxy(this.focus, this)).on('blur', $.proxy(this.blur, this)).on('keypress', $.proxy(this.keypress, this)).on('keyup', $.proxy(this.keyup, this));
+
+      if (this.eventSupported('keydown')) {
+        this.$element.on('keydown', $.proxy(this.keydown, this));
+      }
+
+      this.$menu.on('click', $.proxy(this.click, this)).on('mouseenter', 'li', $.proxy(this.mouseenter, this)).on('mouseleave', 'li', $.proxy(this.mouseleave, this));
+    },
+
+    destroy: function destroy() {
+      this.$element.data('typeahead', null);
+      this.$element.data('active', null);
+      this.$element.off('focus').off('blur').off('keypress').off('keyup');
+
+      if (this.eventSupported('keydown')) {
+        this.$element.off('keydown');
+      }
+
+      this.$menu.remove();
+    },
+
+    eventSupported: function eventSupported(eventName) {
+      var isSupported = (eventName in this.$element);
+      if (!isSupported) {
+        this.$element.setAttribute(eventName, 'return;');
+        isSupported = typeof this.$element[eventName] === 'function';
+      }
+      return isSupported;
+    },
+
+    move: function move(e) {
+      if (!this.shown) return;
+
+      switch (e.keyCode) {
+        case 9: // tab
+        case 13: // enter
+        case 27:
+          // escape
+          e.preventDefault();
+          break;
+
+        case 38:
+          // up arrow
+          // with the shiftKey (this is actually the left parenthesis)
+          if (e.shiftKey) return;
+          e.preventDefault();
+          this.prev();
+          break;
+
+        case 40:
+          // down arrow
+          // with the shiftKey (this is actually the right parenthesis)
+          if (e.shiftKey) return;
+          e.preventDefault();
+          this.next();
+          break;
+      }
+    },
+
+    keydown: function keydown(e) {
+      this.suppressKeyPressRepeat = ~$.inArray(e.keyCode, [40, 38, 9, 13, 27]);
+      if (!this.shown && e.keyCode == 40) {
+        this.lookup();
+      } else {
+        this.move(e);
+      }
+    },
+
+    keypress: function keypress(e) {
+      if (this.suppressKeyPressRepeat) return;
+      this.move(e);
+    },
+
+    keyup: function keyup(e) {
+      switch (e.keyCode) {
+        case 40: // down arrow
+        case 38: // up arrow
+        case 16: // shift
+        case 17: // ctrl
+        case 18:
+          // alt
+          break;
+
+        case 9: // tab
+        case 13:
+          // enter
+          if (!this.shown) return;
+          this.select();
+          break;
+
+        case 27:
+          // escape
+          if (!this.shown) return;
+          this.hide();
+          break;
+        default:
+          this.lookup();
+      }
+
+      e.preventDefault();
+    },
+
+    focus: function focus(e) {
+      if (!this.focused) {
+        this.focused = true;
+        if (this.options.showHintOnFocus) {
+          this.lookup('');
+        }
+      }
+    },
+
+    blur: function blur(e) {
+      this.focused = false;
+      if (!this.mousedover && this.shown) this.hide();
+    },
+
+    click: function click(e) {
+      e.preventDefault();
+      this.select();
+      this.$element.focus();
+    },
+
+    mouseenter: function mouseenter(e) {
+      this.mousedover = true;
+      this.$menu.find('.active').removeClass('active');
+      $(e.currentTarget).addClass('active');
+    },
+
+    mouseleave: function mouseleave(e) {
+      this.mousedover = false;
+      if (!this.focused && this.shown) this.hide();
+    }
+
+  };
+
+  /* TYPEAHEAD PLUGIN DEFINITION
+   * =========================== */
+
+  var old = $.fn.typeahead;
+
+  $.fn.typeahead = function (option) {
+    var arg = arguments;
+    if (typeof option == 'string' && option == 'getActive') {
+      return this.data('active');
+    }
+    return this.each(function () {
+      var $this = $(this),
+          data = $this.data('typeahead'),
+          options = typeof option == 'object' && option;
+      if (!data) $this.data('typeahead', data = new Typeahead(this, options));
+      if (typeof option == 'string') {
+        if (arg.length > 1) {
+          data[option].apply(data, Array.prototype.slice.call(arg, 1));
+        } else {
+          data[option]();
+        }
+      }
+    });
+  };
+
+  $.fn.typeahead.defaults = {
+    source: [],
+    items: 8,
+    menu: '<ul class="typeahead dropdown-menu" role="listbox"></ul>',
+    item: '<li><a href="#" role="option"></a></li>',
+    minLength: 1,
+    scrollHeight: 0,
+    autoSelect: true,
+    afterSelect: $.noop,
+    addItem: false,
+    delay: 0
+  };
+
+  $.fn.typeahead.Constructor = Typeahead;
+
+  /* TYPEAHEAD NO CONFLICT
+   * =================== */
+
+  $.fn.typeahead.noConflict = function () {
+    $.fn.typeahead = old;
+    return this;
+  };
+
+  /* TYPEAHEAD DATA-API
+   * ================== */
+
+  $(document).on('focus.typeahead.data-api', '[data-provide="typeahead"]', function (e) {
+    var $this = $(this);
+    if ($this.data('typeahead')) return;
+    $this.typeahead($this.data());
+  });
+});
+
+},{"jquery":2}],10:[function(require,module,exports){
 'use strict';
 
 Vue.http.headers.common['X-CSRF-TOKEN'] = document.querySelector('#token').getAttribute('value');
@@ -14988,5 +17785,8 @@ var $ = require('jquery');
 var _ = require('underscore');
 var moment = require('moment');
 var tz = require('moment-timezone');
+require('./bootstrap3-typeahead.js');
+require('../../../node_modules/tablesaw/dist/tablesaw.js');
+require("jquery-autocomplete");
 
-},{"jquery":1,"moment":5,"moment-timezone":3,"underscore":6}]},{},[7]);
+},{"../../../node_modules/tablesaw/dist/tablesaw.js":7,"./bootstrap3-typeahead.js":9,"jquery":2,"jquery-autocomplete":1,"moment":6,"moment-timezone":4,"underscore":8}]},{},[10]);

@@ -22,7 +22,6 @@ elixir(function(mix) {
             "dashboard.js",
             "item_show.js",
             "utils.js",
-            "bootstrap3-typeahead.js"
         ],
         "resources/assets/js/inventory-app.js").browserify('inventory-app.js');
 

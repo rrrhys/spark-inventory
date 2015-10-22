@@ -13,14 +13,17 @@
             Showing <span>@{{ from }}</span> to <span>@{{ to }}</span> (of <span>@{{ total }}</span>)
             <a class="pagination-arrow clickable" v-show="current_page < last_page" v-on="click: fetchItems(current_page+1)">&gt;</a>
 
-            <table class="table table-bordered table-hover">
-                <tr>
-                    <th>Date/Time</th>
-                    <th>Description</th>
-                    <th>Reference</th>
-                    <th>Quantity Moved</th>
-                    <th>Final Quantity</th>
-                </tr>
+            <table class="table table-bordered table-hover tablesaw" data-tablesaw-mode="stack">
+                <thead>
+                    <tr>
+                        <th>Date/Time</th>
+                        <th>Description</th>
+                        <th>Reference</th>
+                        <th>Quantity Moved</th>
+                        <th>Final Quantity</th>
+                    </tr>
+                </thead>
+
                 <tr v-repeat="movement in movements">
                     <td>@{{ movement.local_time }}</td>
                     <td>@{{ movement.description }}</td>
