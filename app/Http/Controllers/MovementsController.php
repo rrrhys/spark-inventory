@@ -54,10 +54,10 @@ class MovementsController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show($item_id, $id)
     {
         //
-        return view("items.movements.show", ['movement_id'=>$id]);
+        return view("items.movements.show", ['item_id'=>$item_id, 'id'=>$id]);
     }
 
     /**

@@ -8,6 +8,13 @@
     <div class="row">
         <div class="col-md-12">
             <div class="panel panel-default" id="list-items">
+
+                <script id="coupon-template" type="x-template">
+                    <input type="text"> coupon template
+                </script>
+
+                <coupon></coupon>
+
                 <div class="panel-heading">Items</div>
 
                 <div class="panel-body">
@@ -92,7 +99,6 @@
                 </div>
             </div>
         </div>
-    </div>
 
 </div>
 @endsection

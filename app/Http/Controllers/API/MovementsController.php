@@ -19,18 +19,17 @@ class MovementsController extends Controller
     public function index(Request $request, $item_id)
     {
         //
-        $limit = 100;
+        $perPage = 20;
+        if($request->has('perPage')){
+            $perPage = $request->get('perPage');
+        }
         if($request->has('max')){
             $limit = (int)$request->get('max');
         }
         $user = Auth::User();
         $item = $user->items()->whereId($item_id)->firstOrFail();
-        $movements = $item->movements->take($limit);
-
-        return response()->json([
-            'result'=>'success',
-            'movements'=>$movements->toArray()
-        ], 200);
+        $movements = $item->movements()->paginate($perPage);
+        return response()->json($movements, 200);
     }
 
     /**
@@ -64,7 +63,6 @@ class MovementsController extends Controller
 
 
 
-
         return response()->json([
             'result'=>'success',
             'movement'=>$movement,
@@ -79,13 +77,13 @@ class MovementsController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($item_id)
+    public function show($item_id, $id)
     {
         $item = Auth::User()->items()->whereId($item_id)->firstOrFail();
 
         return response()->json([
             'result'=>'success',
-            'movements' => $item->movements,
+            'movement' => $item->movements()->whereId($id)->firstOrFail(),
             'item'=>$item,
         ], 200);
     }

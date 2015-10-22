@@ -1,4 +1,10 @@
 
+
+Vue.component('coupon', {
+    template: document.querySelector("#coupon-template")
+});
+
+
 // todo: Adding a blank item this way is silly.
 $("#list-items").length > 0 ? new Vue({
     el: "#list-items",
@@ -142,7 +148,12 @@ $("#list-items").length > 0 ? new Vue({
 
                 addAlert('Item Deleted', 'success');
             });
+        },
+        editItem: function(item, e){
+            var i = item;
+
         }
     }
 
 }) :  null;
+

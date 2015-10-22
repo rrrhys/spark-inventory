@@ -1,31 +1,25 @@
 $("#item_movements_show").length > 0 ? new Vue({
-    el: "#item_movement",
+    el: "#item_movements_show",
     ready: function(){
         console.log(this.item_id);
-        this.fetchItem();
-        this.fetchLastMovements();
+        this.fetchMovement();
 
     },
 
     data: {
-        item: {name: "Loading.."},
+        movement: {name: "Loading.."},
+        item: {},
         item_id: "",
-        direction: "",
-        movements: [],
-        new_movement: {
-            description: "",
-            reference: "",
-            quantity: ""
-        },
-        saving: false,
+        id: "",
     },
     methods: {
-        fetchItem: function(){
-            this.$http.get("/api/v1/items/" + this.item_id, function(response){
+        fetchMovement: function(){
+            this.$http.get("/api/v1/items/" + this.item_id + "/movements/" + this.id, function(response){
+                this.movement = response.movement;
                 this.item = response.item;
             });
         },
-        fetchLastMovements: function(){
+     /*   fetchLastMovements: function(){
             this.$http.get("/api/v1/items/"+ this.item_id + "/movements?max=5", function(response){
                 this.movements = response.movements;
             });
@@ -48,6 +42,6 @@ $("#item_movements_show").length > 0 ? new Vue({
                 this.saving = false;
                 window.httpErrorHandler(d,s,r);
             });
-        }
+        }*/
     }
 }) : null;

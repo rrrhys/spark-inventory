@@ -28,7 +28,7 @@
         <div class="row splash-nav">
             <div class="col-md-10 col-md-offset-1">
                 <div class="pull-left splash-brand">
-                    <i class="fa fa-btn fa-sun-o"></i>Laravel Spark
+                    <i class="fa fa-btn {{Config::get('saas.icon')}}"></i>{{Config::get('saas.name')}}
                 </div>
 
                 <div class="navbar-header">

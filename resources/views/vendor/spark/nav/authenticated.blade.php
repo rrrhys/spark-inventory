@@ -12,7 +12,7 @@
 
 			<!-- Branding Image -->
 			<a class="navbar-brand" href="/" style="padding-top: 14px;">
-				<i class="fa fa-btn fa-truck"></i>Spark
+				<i class="fa fa-btn {{Config::get('saas.icon')}}"></i>{{Config::get('saas.name')}}
 			</a>
 		</div>
 

@@ -463,4 +463,10 @@ body {
 .clickable {
   cursor: pointer; }
 
+.number {
+  text-align: right; }
+
+.number.negative {
+  color: #CF000F; }
+
 /*# sourceMappingURL=app.css.map */

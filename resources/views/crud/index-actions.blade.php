@@ -1,3 +1,9 @@
+<?php
+/* using this component:
+Must be in a Vue context with editItem(item, $event) and deleteItem(item, $event) methods.
+*/
+?>
+
 <div class="dropdown">
     <button
             class="btn btn-default dropdown-toggle btn-block"
@@ -10,7 +16,7 @@
         <span class="caret"></span>
     </button>
     <ul class="dropdown-menu">
-        <li><a href="#">Edit</a></li>
+        <li><a v-on="click:editItem(item, $event)">Edit</a></li>
         <li>
             <a v-on="click:deleteAreYouSure" v-show="!deleteConfirm">Delete</a>
             <a v-show="deleteConfirm" class="bg-danger">Are you sure?

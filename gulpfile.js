@@ -12,18 +12,24 @@ var elixir = require('laravel-elixir');
  */
 
 elixir(function(mix) {
+
+
+    mix.scripts([
+            "inventory.js",
+            "item-movement.js",
+            "item-list.js",
+            "item-movement-show.js",
+            "dashboard.js",
+            "item_show.js",
+            "utils.js",
+            "bootstrap3-typeahead.js"
+        ],
+        "resources/assets/js/inventory-app.js").browserify('inventory-app.js');
+
     mix.sass('app.scss')
        .browserify('app.js')
-        .browserify('requires.js');
+        .browserify('requires.js')
+        .browserify('inventory-app.js');
 
- mix.scripts([
-      "item-movement.js",
-     "item-list.js",
-         "dashboard.js",
-         "item_show.js",
-      "utils.js",
-         "bootstrap3-typeahead.js"
-     ],
-     "public/js/inventory-app.js")
 
 });

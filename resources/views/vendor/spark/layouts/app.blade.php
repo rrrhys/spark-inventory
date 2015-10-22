@@ -21,6 +21,8 @@
     <!-- Footer -->
     @include('spark::common.footer')
 
+    @include('templates.all');
+
     <!-- JavaScript Application -->
     <script type="text/javascript" src="https://www.google.com/jsapi"></script>
     <script src="/js/app.js"></script>
